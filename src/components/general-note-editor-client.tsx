@@ -8,7 +8,8 @@ import { saveGeneralNote, deleteGeneralNote } from '@/app/dashboard/notes/action
 import { RichTextEditor } from '@/components/rich-text-editor'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ArrowLeft, Trash2, Folder } from 'lucide-react'
+import { ArrowLeft, Trash2, Folder, Loader2 } from 'lucide-react'
+import { useToast } from '@/components/ui/toast'
 
 interface GeneralNoteEditorClientProps {
   initialNote: GeneralNoteWithSubject
@@ -20,40 +21,59 @@ export function GeneralNoteEditorClient({
   subjects,
 }: GeneralNoteEditorClientProps) {
   const router = useRouter()
+  const toast = useToast()
   const [title, setTitle] = useState(initialNote.title || 'Untitled Note')
   const [subjectId, setSubjectId] = useState<string | null>(initialNote.subject_id || null)
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(initialNote.updated_at)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Handle Save Note
   const handleSave = async (content: Json, plainText: string): Promise<boolean> => {
-    const res = await saveGeneralNote(
-      initialNote.id,
-      title,
-      subjectId,
-      content,
-      plainText
-    )
-    if (res.success) {
-      setLastSavedAt(new Date().toISOString())
-      return true
+    try {
+      const res = await saveGeneralNote(
+        initialNote.id,
+        title,
+        subjectId,
+        content,
+        plainText
+      )
+      if (res.success) {
+        setLastSavedAt(new Date().toISOString())
+        toast.success('Note saved successfully')
+        return true
+      }
+      toast.error(res.error || 'Unable to save note. Please try again.')
+      return false
+    } catch (err: any) {
+      toast.error(err?.message || 'Unable to save note')
+      return false
     }
-    return false
   }
 
   // Handle Delete Note
   const handleDelete = async (): Promise<boolean> => {
+    if (isDeleting) return false
     const confirmed = window.confirm(
       `Are you sure you want to delete "${title}"? This cannot be undone.`
     )
     if (!confirmed) return false
 
-    const res = await deleteGeneralNote(initialNote.id)
-    if (res.success) {
-      router.push('/dashboard/general-notes')
-      return true
+    setIsDeleting(true)
+    try {
+      const res = await deleteGeneralNote(initialNote.id)
+      if (res.success) {
+        toast.success('Note deleted')
+        router.push('/dashboard/general-notes')
+        return true
+      }
+      toast.error(res.error || 'Failed to delete note')
+      return false
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to delete note')
+      return false
+    } finally {
+      setIsDeleting(false)
     }
-    alert(res.error || 'Failed to delete note')
-    return false
   }
 
   return (
@@ -88,11 +108,21 @@ export function GeneralNoteEditorClient({
             variant="outline"
             size="sm"
             onClick={handleDelete}
+            disabled={isDeleting}
             className="h-8 text-xs text-zinc-400 hover:text-red-400 hover:border-red-500/30"
             title="Delete this note"
           >
-            <Trash2 className="w-3.5 h-3.5 mr-1" />
-            Delete
+            {isDeleting ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin text-red-400" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                Delete
+              </>
+            )}
           </Button>
         </div>
       </div>

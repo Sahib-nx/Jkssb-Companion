@@ -17,6 +17,7 @@ import {
   BookOpen,
   Menu,
   X,
+  Loader2,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -27,6 +28,7 @@ interface DashboardNavProps {
 export function DashboardNav({ userEmail }: DashboardNavProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const links = [
     {
@@ -160,15 +162,28 @@ export function DashboardNav({ userEmail }: DashboardNavProps) {
               <p className="text-[11px] text-zinc-400">JKSSB Aspirant</p>
             </div>
           </div>
-          <form action={logout}>
+          <form
+            action={logout}
+            onSubmit={() => setIsLoggingOut(true)}
+          >
             <Button
               variant="outline"
               size="sm"
+              disabled={isLoggingOut}
               className="w-full justify-start text-xs text-zinc-400 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10"
               type="submit"
             >
-              <LogOut className="w-3.5 h-3.5 mr-2" />
-              Sign Out
+              {isLoggingOut ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin text-red-400" />
+                  Signing Out...
+                </>
+              ) : (
+                <>
+                  <LogOut className="w-3.5 h-3.5 mr-2" />
+                  Sign Out
+                </>
+              )}
             </Button>
           </form>
         </div>

@@ -19,6 +19,8 @@ import {
   Sparkles,
 } from 'lucide-react'
 
+import { useToast } from '@/components/ui/toast'
+
 interface RevisionCreatorProps {
   subjects: (Subject & { lectures: Lecture[] })[]
   notesLectureIds: string[]
@@ -31,6 +33,7 @@ export function RevisionCreator({
   onSuccess,
 }: RevisionCreatorProps) {
   const router = useRouter()
+  const toast = useToast()
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>(subjects[0]?.id || '')
   const [mode, setMode] = useState<RevisionMode>('range')
   const [title, setTitle] = useState('')
@@ -100,32 +103,39 @@ export function RevisionCreator({
 
   // Handle Submit
   const handleStartRevision = () => {
+    if (isCreating) return
     if (selectedLectures.length === 0) {
-      alert('Please select at least one lecture.')
+      toast.error('Please select at least one lecture.')
       return
     }
 
     const sessionTitle = title.trim() || getDefaultTitle()
 
     startTransition(async () => {
-      const res = await createRevisionSession({
-        title: sessionTitle,
-        subjectId: currentSubject.id,
-        mode,
-        lectureIds: selectedLectures.map((l) => l.id),
-        scheduledDate: isScheduled ? scheduledDate : null,
-        description: description.trim() || null,
-      })
+      try {
+        const res = await createRevisionSession({
+          title: sessionTitle,
+          subjectId: currentSubject.id,
+          mode,
+          lectureIds: selectedLectures.map((l) => l.id),
+          scheduledDate: isScheduled ? scheduledDate : null,
+          description: description.trim() || null,
+        })
 
-      if (res.success && res.sessionId) {
-        if (onSuccess) onSuccess()
-        if (isScheduled) {
-          router.push('/dashboard/revision?tab=scheduled')
+        if (res.success && res.sessionId) {
+          if (onSuccess) onSuccess()
+          if (isScheduled) {
+            toast.success('Revision session scheduled successfully')
+            router.push('/dashboard/revision?tab=scheduled')
+          } else {
+            toast.success('Revision session created')
+            router.push(`/dashboard/revision/workspace/${res.sessionId}`)
+          }
         } else {
-          router.push(`/dashboard/revision/workspace/${res.sessionId}`)
+          toast.error(res.error || 'Failed to start revision session')
         }
-      } else {
-        alert(res.error || 'Failed to start revision session')
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to start revision session')
       }
     })
   }
@@ -414,7 +424,7 @@ export function RevisionCreator({
           {isCreating ? (
             <>
               <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-              Initializing...
+              {isScheduled ? 'Scheduling...' : 'Initializing...'}
             </>
           ) : isScheduled ? (
             <>

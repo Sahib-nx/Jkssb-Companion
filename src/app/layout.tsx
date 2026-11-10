@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: 'Personal study management and lecture tracker for the JKSSB Multi-Tasking Staff examination.',
 }
 
+import { ToastProvider } from '@/components/ui/toast'
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,7 +29,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#0B0D12] text-zinc-100 antialiased selection:bg-blue-600 selection:text-white`}
       >
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   )

@@ -62,10 +62,13 @@ function ReadOnlyNoteViewer({ content }: { content: any }) {
   )
 }
 
+import { useToast } from '@/components/ui/toast'
+
 export function RevisionWorkspaceClient({
   initialSession,
 }: RevisionWorkspaceClientProps) {
   const router = useRouter()
+  const toast = useToast()
   const [session, setSession] = useState<RevisionSessionWithDetails>(initialSession)
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -95,45 +98,55 @@ export function RevisionWorkspaceClient({
 
   // Handle Mark as Revised
   const handleMarkRevised = (advanceNext = true) => {
-    if (!currentItem) return
+    if (isPending || !currentItem) return
 
     startTransition(async () => {
-      const res = await recordLectureRevision({
-        sessionId: session.id,
-        lectureId: currentItem.lecture_id,
-        isDifficult,
-        needsReRevision,
-        nextRevisionDate: needsReRevision && nextRevisionDate ? nextRevisionDate : null,
-      })
-
-      if (res.success) {
-        // Update local session state
-        setSession((prev) => {
-          const updatedLectures = [...prev.lectures]
-          updatedLectures[currentIndex] = {
-            ...updatedLectures[currentIndex],
-            is_revised: true,
-            is_difficult: isDifficult,
-            needs_re_revision: needsReRevision,
-            revised_at: new Date().toISOString(),
-          }
-          const revisedCount = updatedLectures.filter((l) => l.is_revised).length
-          const progressPercentage = Math.round((revisedCount / updatedLectures.length) * 100)
-
-          return {
-            ...prev,
-            lectures: updatedLectures,
-            revised_count: revisedCount,
-            progress_percentage: progressPercentage,
-            status: res.allCompleted ? 'completed' : prev.status,
-          }
+      try {
+        const res = await recordLectureRevision({
+          sessionId: session.id,
+          lectureId: currentItem.lecture_id,
+          isDifficult,
+          needsReRevision,
+          nextRevisionDate: needsReRevision && nextRevisionDate ? nextRevisionDate : null,
         })
 
-        if (advanceNext && currentIndex < session.lectures.length - 1) {
-          handleSelectLecture(currentIndex + 1)
+        if (res.success) {
+          // Update local session state
+          setSession((prev) => {
+            const updatedLectures = [...prev.lectures]
+            updatedLectures[currentIndex] = {
+              ...updatedLectures[currentIndex],
+              is_revised: true,
+              is_difficult: isDifficult,
+              needs_re_revision: needsReRevision,
+              revised_at: new Date().toISOString(),
+            }
+            const revisedCount = updatedLectures.filter((l) => l.is_revised).length
+            const progressPercentage = Math.round((revisedCount / updatedLectures.length) * 100)
+
+            return {
+              ...prev,
+              lectures: updatedLectures,
+              revised_count: revisedCount,
+              progress_percentage: progressPercentage,
+              status: res.allCompleted ? 'completed' : prev.status,
+            }
+          })
+
+          if (res.allCompleted) {
+            toast.success('🎉 Revision session completed!')
+          } else {
+            toast.success(`Lecture #${currentItem.lecture.lecture_number} marked as revised`)
+          }
+
+          if (advanceNext && currentIndex < session.lectures.length - 1) {
+            handleSelectLecture(currentIndex + 1)
+          }
+        } else {
+          toast.error(res.error || 'Failed to record revision')
         }
-      } else {
-        alert(res.error || 'Failed to record revision')
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to record revision')
       }
     })
   }
@@ -360,7 +373,7 @@ export function RevisionWorkspaceClient({
                   ) : (
                     <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
                   )}
-                  Mark as Revised
+                  {isPending ? 'Recording...' : 'Mark as Revised'}
                 </Button>
               </div>
             </div>

@@ -26,6 +26,8 @@ import {
   BookText,
 } from 'lucide-react'
 
+import { useToast } from '@/components/ui/toast'
+
 interface LectureTrackerClientProps {
   subjects: Subject[]
   activeSubject: SubjectWithStats
@@ -39,6 +41,7 @@ export function LectureTrackerClient({
   lectures,
   overallPercentage,
 }: LectureTrackerClientProps) {
+  const toast = useToast()
   const [filter, setFilter] = useState<'all' | 'not_started' | 'in_progress' | 'completed'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [pendingLectureId, setPendingLectureId] = useState<string | null>(null)
@@ -46,13 +49,27 @@ export function LectureTrackerClient({
 
   // Handle status update
   const handleStatusChange = (lectureId: string, targetStatus: TargetStatus) => {
+    if (pendingLectureId) return
     setPendingLectureId(lectureId)
     startTransition(async () => {
-      const res = await updateLectureProgress(lectureId, targetStatus)
-      if (!res.success) {
-        alert(res.error || 'Failed to update lecture status')
+      try {
+        const res = await updateLectureProgress(lectureId, targetStatus)
+        if (res.success) {
+          if (targetStatus === 'completed') {
+            toast.success('Lecture marked as completed!')
+          } else if (targetStatus === 'in_progress') {
+            toast.info('Lecture marked as in progress')
+          } else {
+            toast.info('Lecture reset to not started')
+          }
+        } else {
+          toast.error(res.error || 'Failed to update lecture status')
+        }
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to update lecture status')
+      } finally {
+        setPendingLectureId(null)
       }
-      setPendingLectureId(null)
     })
   }
 

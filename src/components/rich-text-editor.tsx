@@ -54,6 +54,7 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved')
   const [lastSaved, setLastSaved] = useState<string | null>(initialLastSavedAt || null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
   const latestContentRef = useRef<{ content: Json; plainText: string } | null>(null)
   const isSavingRef = useRef<boolean>(false)
@@ -398,7 +399,7 @@ export function RichTextEditor({
           {saveStatus === 'error' && (
             <span className="flex items-center text-red-400">
               <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
-              Save error
+              Save failed
             </span>
           )}
 
@@ -406,22 +407,44 @@ export function RichTextEditor({
             variant="outline"
             size="sm"
             onClick={handleSaveNow}
-            disabled={saveStatus === 'saving'}
+            disabled={saveStatus === 'saving' || isDeleting}
             className="h-7 px-2.5 text-xs text-zinc-300"
           >
-            <Save className="w-3 h-3 mr-1" />
-            Save
+            {saveStatus === 'saving' ? (
+              <>
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-3 h-3 mr-1" />
+                Save
+              </>
+            )}
           </Button>
 
           {onDelete && (
             <Button
               variant="outline"
               size="sm"
-              onClick={onDelete}
+              onClick={async () => {
+                if (isDeleting) return
+                setIsDeleting(true)
+                try {
+                  await onDelete()
+                } finally {
+                  setIsDeleting(false)
+                }
+              }}
+              disabled={saveStatus === 'saving' || isDeleting}
               className="h-7 px-2 text-xs text-zinc-400 hover:text-red-400 hover:border-red-500/30"
               title="Delete Note"
             >
-              <Trash2 className="w-3 h-3" />
+              {isDeleting ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Trash2 className="w-3 h-3" />
+              )}
             </Button>
           )}
         </div>

@@ -26,7 +26,9 @@ import {
   BookOpen,
   CalendarDays,
   Sparkles,
+  Loader2,
 } from 'lucide-react'
+import { useToast } from '@/components/ui/toast'
 
 interface RevisionHubClientProps {
   subjects: (Subject & { lectures: Lecture[] })[]
@@ -57,17 +59,29 @@ export function RevisionHubClient({
   totalRevisedLectures,
   totalRevisionEvents,
 }: RevisionHubClientProps) {
+  const toast = useToast()
   const [showCreator, setShowCreator] = useState(false)
   const [activeTab, setActiveTab] = useState<'active' | 'scheduled' | 'difficult' | 'history'>('active')
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const handleDeleteSession = async (sessionId: string, title: string) => {
+    if (deletingId) return
     const confirmed = window.confirm(`Delete revision session "${title}"?`)
     if (!confirmed) return
 
     setDeletingId(sessionId)
-    await deleteRevisionSession(sessionId)
-    setDeletingId(null)
+    try {
+      const res = await deleteRevisionSession(sessionId)
+      if (res.success) {
+        toast.success('Revision session deleted')
+      } else {
+        toast.error(res.error || 'Failed to delete revision session')
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to delete session')
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   const formatDate = (dateStr?: string | null) => {
@@ -278,11 +292,15 @@ export function RevisionHubClient({
                       <Button
                         variant="ghost"
                         size="sm"
-                        disabled={deletingId === session.id}
+                        disabled={deletingId !== null}
                         onClick={() => handleDeleteSession(session.id, session.title)}
                         className="h-8 px-2 text-zinc-500 hover:text-red-400"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        {deletingId === session.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-red-400" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
                       </Button>
                     </div>
                   </CardContent>

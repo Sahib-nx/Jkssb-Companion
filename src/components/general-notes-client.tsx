@@ -20,6 +20,8 @@ import {
   Folder,
 } from 'lucide-react'
 
+import { useToast } from '@/components/ui/toast'
+
 interface GeneralNotesClientProps {
   initialNotes: GeneralNoteWithSubject[]
   subjects: Subject[]
@@ -30,6 +32,7 @@ export function GeneralNotesClient({
   subjects,
 }: GeneralNotesClientProps) {
   const router = useRouter()
+  const toast = useToast()
   const [notes, setNotes] = useState<GeneralNoteWithSubject[]>(initialNotes)
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -38,38 +41,50 @@ export function GeneralNotesClient({
 
   // Handle Create New Note
   const handleCreateNote = () => {
+    if (isCreating || deletingId) return
     startCreateTransition(async () => {
-      const res = await saveGeneralNote(
-        null,
-        'Untitled Note',
-        selectedSubjectId !== 'all' && selectedSubjectId !== 'uncategorized'
-          ? selectedSubjectId
-          : null,
-        {},
-        ''
-      )
+      try {
+        const res = await saveGeneralNote(
+          null,
+          'Untitled Note',
+          selectedSubjectId !== 'all' && selectedSubjectId !== 'uncategorized'
+            ? selectedSubjectId
+            : null,
+          {},
+          ''
+        )
 
-      if (res.success && res.noteId) {
-        router.push(`/dashboard/general-notes/${res.noteId}`)
-      } else {
-        alert(res.error || 'Failed to create note')
+        if (res.success && res.noteId) {
+          toast.success('General note created')
+          router.push(`/dashboard/general-notes/${res.noteId}`)
+        } else {
+          toast.error(res.error || 'Failed to create note')
+        }
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to create note')
       }
     })
   }
 
   // Handle Delete Note
   const handleDeleteNote = async (noteId: string, title: string) => {
+    if (deletingId || isCreating) return
     const confirmed = window.confirm(`Are you sure you want to delete "${title}"?`)
     if (!confirmed) return
 
     setDeletingId(noteId)
-    const res = await deleteGeneralNote(noteId)
-    setDeletingId(null)
-
-    if (res.success) {
-      setNotes((prev) => prev.filter((n) => n.id !== noteId))
-    } else {
-      alert(res.error || 'Failed to delete note')
+    try {
+      const res = await deleteGeneralNote(noteId)
+      if (res.success) {
+        setNotes((prev) => prev.filter((n) => n.id !== noteId))
+        toast.success('Note deleted successfully')
+      } else {
+        toast.error(res.error || 'Failed to delete note')
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to delete note')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -247,12 +262,12 @@ export function GeneralNotesClient({
                     <Button
                       variant="ghost"
                       size="sm"
-                      disabled={isDeleting}
+                      disabled={isDeleting || isCreating || deletingId !== null}
                       onClick={() => handleDeleteNote(note.id, note.title)}
                       className="h-7 px-2 text-xs text-zinc-500 hover:text-red-400"
                     >
                       {isDeleting ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-red-400" />
                       ) : (
                         <Trash2 className="w-3.5 h-3.5" />
                       )}

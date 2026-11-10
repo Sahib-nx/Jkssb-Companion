@@ -30,6 +30,8 @@ import {
   ChevronUp,
 } from 'lucide-react'
 
+import { useToast } from '@/components/ui/toast'
+
 interface PlannerClientProps {
   todayDate: string
   subjects: Subject[]
@@ -51,6 +53,7 @@ export function PlannerClient({
   totalCount,
   todayCompletedCount,
 }: PlannerClientProps) {
+  const toast = useToast()
   const [showCreator, setShowCreator] = useState(false)
   const [editingTask, setEditingTask] = useState<StudyTaskWithSubject | null>(null)
 
@@ -62,6 +65,8 @@ export function PlannerClient({
 
   const [isPending, startTransition] = useTransition()
   const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null)
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
+  const [reschedulingTaskId, setReschedulingTaskId] = useState<string | null>(null)
   const [showCompleted, setShowCompleted] = useState(true)
 
   // Open Create Modal
@@ -87,57 +92,113 @@ export function PlannerClient({
   // Handle Submit Form
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title.trim()) return
+    if (!title.trim() || isPending) return
 
     startTransition(async () => {
-      if (editingTask) {
-        await updateStudyTask({
-          taskId: editingTask.id,
-          title,
-          subjectId: subjectId || null,
-          scheduledDate,
-          description: description || null,
-        })
-      } else {
-        await createStudyTask({
-          title,
-          subjectId: subjectId || null,
-          scheduledDate,
-          description: description || null,
-        })
+      try {
+        if (editingTask) {
+          const res = await updateStudyTask({
+            taskId: editingTask.id,
+            title,
+            subjectId: subjectId || null,
+            scheduledDate,
+            description: description || null,
+          })
+          if (res.success) {
+            toast.success('Task updated successfully')
+          } else {
+            toast.error(res.error || 'Failed to update task')
+          }
+        } else {
+          const res = await createStudyTask({
+            title,
+            subjectId: subjectId || null,
+            scheduledDate,
+            description: description || null,
+          })
+          if (res.success) {
+            toast.success('Study task created successfully')
+          } else {
+            toast.error(res.error || 'Failed to create task')
+          }
+        }
+        setShowCreator(false)
+        setEditingTask(null)
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to save task')
       }
-      setShowCreator(false)
-      setEditingTask(null)
     })
   }
 
   // Toggle Completion
   const handleToggle = (task: StudyTaskWithSubject) => {
+    if (togglingTaskId) return
     setTogglingTaskId(task.id)
     startTransition(async () => {
-      await toggleTaskStatus(task.id, task.status)
-      setTogglingTaskId(null)
+      try {
+        const nextStatus = task.status === 'completed' ? 'pending' : 'completed'
+        const res = await toggleTaskStatus(task.id, task.status)
+        if (res.success) {
+          if (nextStatus === 'completed') {
+            toast.success('Task completed!')
+          } else {
+            toast.info('Task marked incomplete')
+          }
+        } else {
+          toast.error(res.error || 'Failed to update task')
+        }
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to update task')
+      } finally {
+        setTogglingTaskId(null)
+      }
     })
   }
 
   // Delete Task
   const handleDelete = (task: StudyTaskWithSubject) => {
+    if (deletingTaskId) return
     if (!window.confirm(`Delete task "${task.title}"?`)) return
+    setDeletingTaskId(task.id)
     startTransition(async () => {
-      await deleteStudyTask(task.id)
+      try {
+        const res = await deleteStudyTask(task.id)
+        if (res.success) {
+          toast.success('Task deleted')
+        } else {
+          toast.error(res.error || 'Failed to delete task')
+        }
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to delete task')
+      } finally {
+        setDeletingTaskId(null)
+      }
     })
   }
 
   // Reschedule Past Task to Today
   const handleRescheduleToToday = (task: StudyTaskWithSubject) => {
+    if (reschedulingTaskId) return
+    setReschedulingTaskId(task.id)
     startTransition(async () => {
-      await updateStudyTask({
-        taskId: task.id,
-        title: task.title,
-        subjectId: task.subject_id,
-        scheduledDate: todayDate,
-        description: task.description,
-      })
+      try {
+        const res = await updateStudyTask({
+          taskId: task.id,
+          title: task.title,
+          subjectId: task.subject_id,
+          scheduledDate: todayDate,
+          description: task.description,
+        })
+        if (res.success) {
+          toast.success('Task moved to today')
+        } else {
+          toast.error(res.error || 'Failed to move task')
+        }
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to move task')
+      } finally {
+        setReschedulingTaskId(null)
+      }
     })
   }
 
@@ -327,6 +388,7 @@ export function PlannerClient({
                 key={task.id}
                 task={task}
                 isToggling={togglingTaskId === task.id}
+                isDeleting={deletingTaskId === task.id}
                 onToggle={() => handleToggle(task)}
                 onEdit={() => openEditModal(task)}
                 onDelete={() => handleDelete(task)}
@@ -355,9 +417,14 @@ export function PlannerClient({
                 <div className="flex items-start space-x-3 flex-1 min-w-0">
                   <button
                     onClick={() => handleToggle(task)}
+                    disabled={togglingTaskId === task.id}
                     className="mt-0.5 text-zinc-500 hover:text-white transition-colors"
                   >
-                    <Circle className="w-4 h-4" />
+                    {togglingTaskId === task.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                    ) : (
+                      <Circle className="w-4 h-4" />
+                    )}
                   </button>
 
                   <div>
@@ -382,18 +449,31 @@ export function PlannerClient({
                   <Button
                     variant="outline"
                     size="sm"
+                    disabled={reschedulingTaskId === task.id || deletingTaskId === task.id}
                     onClick={() => handleRescheduleToToday(task)}
                     className="h-7 text-xs border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
                   >
-                    Move to Today
+                    {reschedulingTaskId === task.id ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin mr-1 text-amber-400" />
+                        Moving...
+                      </>
+                    ) : (
+                      'Move to Today'
+                    )}
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
+                    disabled={deletingTaskId === task.id || reschedulingTaskId === task.id}
                     onClick={() => handleDelete(task)}
                     className="h-7 px-2 text-zinc-500 hover:text-red-400"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    {deletingTaskId === task.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-red-400" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    )}
                   </Button>
                 </div>
               </div>
@@ -418,6 +498,7 @@ export function PlannerClient({
                 key={task.id}
                 task={task}
                 isToggling={togglingTaskId === task.id}
+                isDeleting={deletingTaskId === task.id}
                 onToggle={() => handleToggle(task)}
                 onEdit={() => openEditModal(task)}
                 onDelete={() => handleDelete(task)}
@@ -446,6 +527,7 @@ export function PlannerClient({
                   key={task.id}
                   task={task}
                   isToggling={togglingTaskId === task.id}
+                  isDeleting={deletingTaskId === task.id}
                   onToggle={() => handleToggle(task)}
                   onEdit={() => openEditModal(task)}
                   onDelete={() => handleDelete(task)}
@@ -462,6 +544,7 @@ export function PlannerClient({
 function TaskRow({
   task,
   isToggling,
+  isDeleting = false,
   onToggle,
   onEdit,
   onDelete,
@@ -469,6 +552,7 @@ function TaskRow({
 }: {
   task: StudyTaskWithSubject
   isToggling: boolean
+  isDeleting?: boolean
   onToggle: () => void
   onEdit: () => void
   onDelete: () => void
@@ -487,7 +571,7 @@ function TaskRow({
       <div className="flex items-start space-x-3 flex-1 min-w-0">
         <button
           onClick={onToggle}
-          disabled={isToggling}
+          disabled={isToggling || isDeleting}
           className="mt-0.5 text-zinc-400 hover:text-white transition-colors shrink-0"
         >
           {isToggling ? (
@@ -535,6 +619,7 @@ function TaskRow({
           variant="ghost"
           size="sm"
           onClick={onEdit}
+          disabled={isToggling || isDeleting}
           className="h-7 px-2 text-zinc-500 hover:text-white"
         >
           <Edit2 className="w-3.5 h-3.5" />
@@ -543,9 +628,14 @@ function TaskRow({
           variant="ghost"
           size="sm"
           onClick={onDelete}
+          disabled={isToggling || isDeleting}
           className="h-7 px-2 text-zinc-500 hover:text-red-400"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          {isDeleting ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-red-400" />
+          ) : (
+            <Trash2 className="w-3.5 h-3.5" />
+          )}
         </Button>
       </div>
     </div>

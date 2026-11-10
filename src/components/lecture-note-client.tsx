@@ -26,7 +26,9 @@ import {
   Check,
   Calendar,
   Sparkles,
+  Loader2,
 } from 'lucide-react'
+import { useToast } from '@/components/ui/toast'
 
 interface LectureNoteClientProps {
   lecture: Lecture
@@ -45,41 +47,54 @@ export function LectureNoteClient({
   prevLecture,
   nextLecture,
 }: LectureNoteClientProps) {
+  const toast = useToast()
   const [progress, setProgress] = useState<LectureProgress | null>(initialProgress)
+  const [pendingStatusAction, setPendingStatusAction] = useState<TargetStatus | null>(null)
   const [isUpdatingStatus, startStatusTransition] = useTransition()
 
   const status = progress?.status || 'not_started'
 
   // Handle status update
   const handleStatusChange = (targetStatus: TargetStatus) => {
+    if (pendingStatusAction) return
+    setPendingStatusAction(targetStatus)
     startStatusTransition(async () => {
-      const res = await updateLectureProgress(lecture.id, targetStatus)
-      if (res.success) {
-        if (targetStatus === 'not_started') {
-          setProgress(null)
-        } else if (targetStatus === 'in_progress') {
-          setProgress((prev) => ({
-            id: prev?.id || 'temp',
-            user_id: prev?.user_id || '',
-            lecture_id: lecture.id,
-            status: 'in_progress',
-            started_at: prev?.started_at || new Date().toISOString(),
-            completed_at: null,
-            updated_at: new Date().toISOString(),
-          }))
-        } else if (targetStatus === 'completed') {
-          setProgress((prev) => ({
-            id: prev?.id || 'temp',
-            user_id: prev?.user_id || '',
-            lecture_id: lecture.id,
-            status: 'completed',
-            started_at: prev?.started_at || new Date().toISOString(),
-            completed_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }))
+      try {
+        const res = await updateLectureProgress(lecture.id, targetStatus)
+        if (res.success) {
+          if (targetStatus === 'not_started') {
+            setProgress(null)
+            toast.info('Lecture reset to not started')
+          } else if (targetStatus === 'in_progress') {
+            setProgress((prev) => ({
+              id: prev?.id || 'temp',
+              user_id: prev?.user_id || '',
+              lecture_id: lecture.id,
+              status: 'in_progress',
+              started_at: prev?.started_at || new Date().toISOString(),
+              completed_at: null,
+              updated_at: new Date().toISOString(),
+            }))
+            toast.info('Lecture marked as in progress')
+          } else if (targetStatus === 'completed') {
+            setProgress((prev) => ({
+              id: prev?.id || 'temp',
+              user_id: prev?.user_id || '',
+              lecture_id: lecture.id,
+              status: 'completed',
+              started_at: prev?.started_at || new Date().toISOString(),
+              completed_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            }))
+            toast.success('Lecture marked as completed!')
+          }
+        } else {
+          toast.error(res.error || 'Failed to update lecture status')
         }
-      } else {
-        alert(res.error || 'Failed to update lecture status')
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to update lecture status')
+      } finally {
+        setPendingStatusAction(null)
       }
     })
   }
@@ -87,7 +102,13 @@ export function LectureNoteClient({
   // Handle Save Note
   const handleSaveNote = async (content: Json, plainText: string): Promise<boolean> => {
     const res = await saveLectureNote(lecture.id, content, plainText)
-    return res.success
+    if (res.success) {
+      toast.success('Notes saved successfully')
+      return true
+    } else {
+      toast.error(res.error || 'Unable to save notes. Please try again.')
+      return false
+    }
   }
 
   // Handle Delete Note
@@ -99,10 +120,11 @@ export function LectureNoteClient({
 
     const res = await deleteLectureNote(lecture.id)
     if (res.success) {
+      toast.success('Lecture notes deleted')
       window.location.reload()
       return true
     }
-    alert(res.error || 'Failed to delete note')
+    toast.error(res.error || 'Failed to delete note')
     return false
   }
 
@@ -231,21 +253,29 @@ export function LectureNoteClient({
                 variant="secondary"
                 size="sm"
                 className="h-8 text-xs text-amber-300 hover:text-amber-200"
-                disabled={isUpdatingStatus}
+                disabled={isUpdatingStatus || !!pendingStatusAction}
                 onClick={() => handleStatusChange('in_progress')}
               >
-                <Play className="w-3 h-3 mr-1.5" />
-                Mark In Progress
+                {pendingStatusAction === 'in_progress' ? (
+                  <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                ) : (
+                  <Play className="w-3 h-3 mr-1.5" />
+                )}
+                {pendingStatusAction === 'in_progress' ? 'Starting...' : 'Mark In Progress'}
               </Button>
               <Button
                 variant="default"
                 size="sm"
                 className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500"
-                disabled={isUpdatingStatus}
+                disabled={isUpdatingStatus || !!pendingStatusAction}
                 onClick={() => handleStatusChange('completed')}
               >
-                <Check className="w-3.5 h-3.5 mr-1" />
-                Mark Completed
+                {pendingStatusAction === 'completed' ? (
+                  <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                ) : (
+                  <Check className="w-3.5 h-3.5 mr-1" />
+                )}
+                {pendingStatusAction === 'completed' ? 'Completing...' : 'Mark Completed'}
               </Button>
             </>
           )}
@@ -256,21 +286,29 @@ export function LectureNoteClient({
                 variant="outline"
                 size="sm"
                 className="h-8 text-xs text-zinc-400 hover:text-zinc-200"
-                disabled={isUpdatingStatus}
+                disabled={isUpdatingStatus || !!pendingStatusAction}
                 onClick={() => handleStatusChange('not_started')}
               >
-                <RotateCcw className="w-3 h-3 mr-1" />
-                Reset
+                {pendingStatusAction === 'not_started' ? (
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-3 h-3 mr-1" />
+                )}
+                {pendingStatusAction === 'not_started' ? 'Resetting...' : 'Reset'}
               </Button>
               <Button
                 variant="default"
                 size="sm"
                 className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500"
-                disabled={isUpdatingStatus}
+                disabled={isUpdatingStatus || !!pendingStatusAction}
                 onClick={() => handleStatusChange('completed')}
               >
-                <Check className="w-3.5 h-3.5 mr-1" />
-                Complete Lecture
+                {pendingStatusAction === 'completed' ? (
+                  <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                ) : (
+                  <Check className="w-3.5 h-3.5 mr-1" />
+                )}
+                {pendingStatusAction === 'completed' ? 'Completing...' : 'Complete Lecture'}
               </Button>
             </>
           )}
@@ -281,21 +319,29 @@ export function LectureNoteClient({
                 variant="outline"
                 size="sm"
                 className="h-8 text-xs text-zinc-400 hover:text-amber-400 hover:border-amber-500/30"
-                disabled={isUpdatingStatus}
+                disabled={isUpdatingStatus || !!pendingStatusAction}
                 onClick={() => handleStatusChange('in_progress')}
               >
-                <Clock className="w-3 h-3 mr-1" />
-                Reopen to In Progress
+                {pendingStatusAction === 'in_progress' ? (
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                ) : (
+                  <Clock className="w-3 h-3 mr-1" />
+                )}
+                {pendingStatusAction === 'in_progress' ? 'Reopening...' : 'Reopen to In Progress'}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 className="h-8 text-xs text-zinc-400 hover:text-red-400 hover:border-red-500/30"
-                disabled={isUpdatingStatus}
+                disabled={isUpdatingStatus || !!pendingStatusAction}
                 onClick={() => handleStatusChange('not_started')}
               >
-                <RotateCcw className="w-3 h-3 mr-1" />
-                Reset
+                {pendingStatusAction === 'not_started' ? (
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-3 h-3 mr-1" />
+                )}
+                {pendingStatusAction === 'not_started' ? 'Resetting...' : 'Reset'}
               </Button>
             </>
           )}

@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { logout } from '@/app/auth/actions'
+import { getUserAiPreferences } from '@/lib/ai/consent-actions'
+import { AiSettingsCard } from '@/components/settings/ai-settings-card'
 import {
   User,
   Shield,
@@ -26,9 +28,10 @@ export default async function SettingsPage() {
   }
 
   // Count subjects and lectures for system status check
-  const [{ count: subCount }, { count: lecCount }] = await Promise.all([
+  const [{ count: subCount }, { count: lecCount }, aiPreferences] = await Promise.all([
     supabase.from('subjects').select('*', { count: 'exact', head: true }),
     supabase.from('lectures').select('*', { count: 'exact', head: true }),
+    getUserAiPreferences(),
   ])
 
   return (
@@ -93,6 +96,9 @@ export default async function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* AI Study Assistant & Privacy Settings */}
+      <AiSettingsCard initialPreferences={aiPreferences} />
 
       {/* Course Curriculum & Syllabus Status */}
       <Card className="border-zinc-800/80 bg-[#11141D]">

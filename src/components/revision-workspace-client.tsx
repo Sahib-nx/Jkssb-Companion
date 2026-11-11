@@ -33,6 +33,8 @@ import Underline from '@tiptap/extension-underline'
 import LinkExtension from '@tiptap/extension-link'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
+import { RevisionAiModes } from '@/components/revision/revision-ai-modes'
+import { RecallRating, calculateNextRevisionDate } from '@/lib/spaced-repetition'
 
 interface RevisionWorkspaceClientProps {
   initialSession: RevisionSessionWithDetails
@@ -149,6 +151,49 @@ export function RevisionWorkspaceClient({
         toast.error(err?.message || 'Failed to record revision')
       }
     })
+  }
+
+  // Handle Active Recall Spaced Repetition Rating
+  const handleRecordRecallRating = async (rating: RecallRating) => {
+    if (!currentItem) return
+    const nextDate = calculateNextRevisionDate(rating)
+    const isDiff = rating === 'did_not_remember'
+    const needsReRev = rating !== 'remembered'
+
+    try {
+      const res = await recordLectureRevision({
+        sessionId: session.id,
+        lectureId: currentItem.lecture_id,
+        isDifficult: isDiff,
+        needsReRevision: needsReRev,
+        nextRevisionDate: nextDate,
+      })
+
+      if (res.success) {
+        setSession((prev) => {
+          const updatedLectures = [...prev.lectures]
+          updatedLectures[currentIndex] = {
+            ...updatedLectures[currentIndex],
+            is_revised: true,
+            is_difficult: isDiff,
+            needs_re_revision: needsReRev,
+            revised_at: new Date().toISOString(),
+          }
+          const revisedCount = updatedLectures.filter((l) => l.is_revised).length
+          const progressPercentage = Math.round((revisedCount / updatedLectures.length) * 100)
+
+          return {
+            ...prev,
+            lectures: updatedLectures,
+            revised_count: revisedCount,
+            progress_percentage: progressPercentage,
+            status: res.allCompleted ? 'completed' : prev.status,
+          }
+        })
+      }
+    } catch (err: any) {
+      console.error('Error recording recall rating:', err)
+    }
   }
 
   const hasNotes = Boolean(
@@ -270,37 +315,47 @@ export function RevisionWorkspaceClient({
               </div>
             </div>
 
-            {/* Reading Canvas: Reusing Original Notes */}
-            <div className="p-6 sm:p-8 min-h-[360px]">
-              {hasNotes ? (
-                <div className="space-y-4">
-                  <div className="text-[11px] text-zinc-500 border-b border-zinc-800/60 pb-2">
-                    Original study notes &bull; Last updated {formatDate(currentItem.note?.updated_at)}
-                  </div>
-                  <ReadOnlyNoteViewer content={currentItem.note?.content} />
-                </div>
-              ) : (
-                <div className="p-12 text-center rounded-xl bg-[#0B0D12] border border-zinc-800/60 space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-zinc-800/60 border border-zinc-700/50 flex items-center justify-center text-zinc-400 mx-auto">
-                    <FileText className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-sm font-semibold text-white">
-                    No Notes Recorded for this Lecture
-                  </h3>
-                  <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                    You haven&apos;t written study notes for {currentItem?.lecture.title} yet. You can still revise concepts or write notes on the dedicated lecture page.
-                  </p>
-                  <Link
-                    href={`/dashboard/lectures/${currentItem?.lecture_id}`}
-                    target="_blank"
-                    className="inline-block pt-1"
-                  >
-                    <Button variant="outline" size="sm" className="h-7 text-xs">
-                      Write Notes for this Lecture
-                    </Button>
-                  </Link>
-                </div>
-              )}
+            {/* Revision Workspace Canvas (Original Notes & AI Modes 1-6) */}
+            <div className="p-6 sm:p-8 min-h-[420px]">
+              <RevisionAiModes
+                lectureId={currentItem?.lecture_id || ''}
+                lectureTitle={currentItem?.lecture.title || ''}
+                subjectName={currentItem?.subject?.name || 'General'}
+                notesText={currentItem?.note?.plain_text || ''}
+                notesContent={currentItem?.note?.content}
+                onRecordRecallRating={handleRecordRecallRating}
+                renderOriginalNotes={() =>
+                  hasNotes ? (
+                    <div className="space-y-4">
+                      <div className="text-[11px] text-zinc-500 border-b border-zinc-800/60 pb-2">
+                        Original study notes &bull; Last updated {formatDate(currentItem.note?.updated_at)}
+                      </div>
+                      <ReadOnlyNoteViewer content={currentItem.note?.content} />
+                    </div>
+                  ) : (
+                    <div className="p-12 text-center rounded-xl bg-[#0B0D12] border border-zinc-800/60 space-y-3">
+                      <div className="w-10 h-10 rounded-xl bg-zinc-800/60 border border-zinc-700/50 flex items-center justify-center text-zinc-400 mx-auto">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-white">
+                        No Notes Recorded for this Lecture
+                      </h3>
+                      <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                        You haven&apos;t written study notes for {currentItem?.lecture.title} yet. You can still revise concepts or write notes on the dedicated lecture page.
+                      </p>
+                      <Link
+                        href={`/dashboard/lectures/${currentItem?.lecture_id}`}
+                        target="_blank"
+                        className="inline-block pt-1"
+                      >
+                        <Button variant="outline" size="sm" className="h-7 text-xs">
+                          Write Notes for this Lecture
+                        </Button>
+                      </Link>
+                    </div>
+                  )
+                }
+              />
             </div>
 
             {/* Bottom Workspace Action Bar */}

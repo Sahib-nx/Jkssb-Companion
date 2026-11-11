@@ -30,8 +30,11 @@ import {
   Clock,
   Save,
   Trash2,
+  Sparkles,
 } from 'lucide-react'
 import { Json } from '@/types/database'
+import { AiConsentModal } from '@/components/ai/ai-consent-modal'
+import { NotesAssistantDialog } from '@/components/ai/notes-assistant-dialog'
 
 type SaveStatus = 'saved' | 'saving' | 'unsaved' | 'error'
 
@@ -58,6 +61,12 @@ export function RichTextEditor({
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
   const latestContentRef = useRef<{ content: Json; plainText: string } | null>(null)
   const isSavingRef = useRef<boolean>(false)
+
+  // AI Assistant States
+  const [isConsentOpen, setIsConsentOpen] = useState(false)
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false)
+  const [selectedText, setSelectedText] = useState<string | null>(null)
+  const [fullDocText, setFullDocText] = useState<string>('')
 
   // Execute Save
   const performSave = useCallback(
@@ -178,6 +187,51 @@ export function RichTextEditor({
     }
 
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+  }
+
+  // AI Assistant trigger helpers
+  const openAiDialog = () => {
+    if (!editor) return
+    const { from, to } = editor.state.selection
+    if (from !== to) {
+      const selected = editor.state.doc.textBetween(from, to, ' ')
+      setSelectedText(selected)
+    } else {
+      setSelectedText(null)
+    }
+    setFullDocText(editor.getText())
+    setIsAiAssistantOpen(true)
+  }
+
+  const handleTriggerAiAssistant = () => {
+    if (!editor) return
+    const hasConsented =
+      typeof window !== 'undefined' && localStorage.getItem('mts_ai_consent') === 'true'
+    if (!hasConsented) {
+      setIsConsentOpen(true)
+      return
+    }
+    openAiDialog()
+  }
+
+  const handleConsentGranted = () => {
+    setIsConsentOpen(false)
+    openAiDialog()
+  }
+
+  const handleApplyAiChanges = (htmlContent: string, isSelection: boolean) => {
+    if (!editor) return
+
+    if (isSelection && editor.state.selection.from !== editor.state.selection.to) {
+      editor.chain().focus().insertContent(htmlContent).run()
+    } else {
+      editor.chain().focus().setContent(htmlContent).run()
+    }
+
+    // Persist changes immediately
+    const updatedJson = editor.getJSON() as Json
+    const updatedText = editor.getText()
+    performSave(updatedJson, updatedText)
   }
 
   if (!editor) {
@@ -374,6 +428,19 @@ export function RichTextEditor({
           >
             <Redo className="w-4 h-4" />
           </button>
+
+          <div className="w-[1px] h-4 bg-zinc-800 mx-1" />
+
+          {/* AI Notes Assistant Button */}
+          <button
+            type="button"
+            onClick={handleTriggerAiAssistant}
+            className="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 border border-purple-500/30 text-xs font-medium transition-all shadow-sm"
+            title="AI Notes Assistant (Organise, Grammar, Summarise, etc.)"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+            <span className="hidden sm:inline">AI Assistant</span>
+          </button>
         </div>
 
         {/* Status Indicator & Save Actions */}
@@ -456,6 +523,21 @@ export function RichTextEditor({
           <EditorContent editor={editor} />
         </div>
       </div>
+
+      {/* AI Modals */}
+      <AiConsentModal
+        isOpen={isConsentOpen}
+        onClose={() => setIsConsentOpen(false)}
+        onConsentGranted={handleConsentGranted}
+      />
+
+      <NotesAssistantDialog
+        isOpen={isAiAssistantOpen}
+        onClose={() => setIsAiAssistantOpen(false)}
+        selectedText={selectedText}
+        fullText={fullDocText}
+        onApplyChanges={handleApplyAiChanges}
+      />
     </div>
   )
 }

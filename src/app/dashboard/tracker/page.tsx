@@ -1,4 +1,4 @@
-import { getSubjectLectures, getDashboardData } from '@/lib/data'
+import { getTrackerData } from '@/lib/data'
 import { LectureTrackerClient } from '@/components/lecture-tracker-client'
 
 interface TrackerPageProps {
@@ -11,12 +11,9 @@ export default async function TrackerPage({ searchParams }: TrackerPageProps) {
   const resolvedSearchParams = await searchParams
   const subjectSlug = resolvedSearchParams.subject
 
-  const [data, overallData] = await Promise.all([
-    getSubjectLectures(subjectSlug),
-    getDashboardData(),
-  ])
+  const data = await getTrackerData(subjectSlug)
 
-  if (!data || !overallData) {
+  if (!data) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <p className="text-zinc-400">Loading lecture tracker...</p>
@@ -24,8 +21,7 @@ export default async function TrackerPage({ searchParams }: TrackerPageProps) {
     )
   }
 
-  const { subjects, activeSubject, lectures } = data
-  const overallPercentage = overallData.overallStats.progress_percentage
+  const { subjects, allLecturesBySubject, overallPercentage, initialSubjectSlug } = data
 
   return (
     <div className="space-y-6">
@@ -40,9 +36,9 @@ export default async function TrackerPage({ searchParams }: TrackerPageProps) {
 
       <LectureTrackerClient
         subjects={subjects}
-        activeSubject={activeSubject}
-        lectures={lectures}
+        allLecturesBySubject={allLecturesBySubject}
         overallPercentage={overallPercentage}
+        initialSubjectSlug={initialSubjectSlug}
       />
     </div>
   )

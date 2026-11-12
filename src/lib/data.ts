@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthenticatedUser } from '@/lib/supabase/server'
+import { cache } from 'react'
 import {
   Subject,
   Lecture,
@@ -16,20 +17,20 @@ import {
   StudyTaskWithSubject,
 } from '@/types/database'
 
-export async function getDashboardData() {
+const SUBJECT_ORDER: Record<string, number> = {
+  'general-knowledge': 1,
+  'english': 2,
+  'mathematics': 3,
+  'reasoning': 4,
+}
+
+/**
+ * Cached per-request subjects getter.
+ * The 4 JKSSB subjects are static course reference data.
+ * Memoizing via React cache() eliminates repeated duplicate queries across layout, pages, and components.
+ */
+export const getCachedSubjects = cache(async (): Promise<Subject[]> => {
   const supabase = await createClient()
-
-  // 1. Get authenticated user
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return null
-  }
-
-  // 2. Fetch all subjects
   const { data: subjects, error: subError } = await supabase
     .from('subjects')
     .select('*')
@@ -39,37 +40,72 @@ export async function getDashboardData() {
     throw new Error(`Failed to load subjects: ${subError?.message || 'Unknown error'}`)
   }
 
-  // Desired ordering: General Knowledge, English, Mathematics, Reasoning
-  const subjectOrder: Record<string, number> = {
-    'general-knowledge': 1,
-    'english': 2,
-    'mathematics': 3,
-    'reasoning': 4,
-  }
-
-  const sortedSubjects = [...(subjects as Subject[])].sort((a, b) => {
-    const orderA = subjectOrder[a.slug] || 99
-    const orderB = subjectOrder[b.slug] || 99
+  return [...(subjects as Subject[])].sort((a, b) => {
+    const orderA = SUBJECT_ORDER[a.slug] || 99
+    const orderB = SUBJECT_ORDER[b.slug] || 99
     return orderA - orderB
   })
+})
 
-  // 3. Fetch all progress records for current user
-  const { data: progressRecords, error: progError } = await supabase
-    .from('lecture_progress')
-    .select('*, lectures!inner(subject_id)')
-    .eq('user_id', user.id)
+/**
+ * Cached per-request subjects with lectures getter.
+ * The 255-lecture catalogue is static reference data.
+ * Memoizing via React cache() eliminates repeated joins across revision sessions and catalogues.
+ */
+export const getCachedSubjectsWithLectures = cache(async () => {
+  const supabase = await createClient()
+  const { data: subjects, error } = await supabase
+    .from('subjects')
+    .select('*, lectures(*)')
+    .order('name')
 
-  if (progError) {
-    throw new Error(`Failed to load progress: ${progError.message}`)
+  if (error || !subjects) {
+    throw new Error(`Failed to load subjects with lectures: ${error?.message || 'Unknown error'}`)
   }
+
+  return [...subjects]
+    .sort((a, b) => {
+      const orderA = SUBJECT_ORDER[a.slug] || 99
+      const orderB = SUBJECT_ORDER[b.slug] || 99
+      return orderA - orderB
+    })
+    .map((s) => ({
+      ...s,
+      lectures: ((s.lectures || []) as Lecture[]).sort((a, b) => a.lecture_number - b.lecture_number),
+    }))
+})
+
+export async function getDashboardData() {
+  const supabase = await createClient()
+
+  // 1. Get authenticated user (memoized per-request)
+  const user = await getAuthenticatedUser()
+  if (!user) {
+    return null
+  }
+
+  // 2. Fetch all subjects and user progress records in PARALLEL
+  const [sortedSubjects, progressRes] = await Promise.all([
+    getCachedSubjects(),
+    supabase
+      .from('lecture_progress')
+      .select('status, lecture_id, completed_at, lectures!inner(subject_id)')
+      .eq('user_id', user.id),
+  ])
+
+  if (progressRes.error) {
+    throw new Error(`Failed to load progress: ${progressRes.error.message}`)
+  }
+
+  const progressRecords = progressRes.data || []
 
   // Map progress by lecture_id and by subject_id
   const progressByLectureId = new Map<string, LectureProgress>()
   const completedBySubjectId = new Map<string, number>()
   const inProgressBySubjectId = new Map<string, number>()
 
-  for (const record of progressRecords || []) {
-    progressByLectureId.set(record.lecture_id, record as LectureProgress)
+  for (const record of progressRecords) {
+    progressByLectureId.set(record.lecture_id, record as unknown as LectureProgress)
     const subjectId = (record as unknown as { lectures: { subject_id: string } }).lectures?.subject_id
 
     if (subjectId) {
@@ -118,43 +154,21 @@ export async function getDashboardData() {
     user,
     subjects: subjectsWithStats,
     overallStats,
+    rawProgress: progressRecords,
   }
 }
 
 export async function getSubjectLectures(slug?: string) {
   const supabase = await createClient()
 
-  // 1. Get authenticated user
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
+  // 1. Get authenticated user (memoized per-request)
+  const user = await getAuthenticatedUser()
+  if (!user) {
     return null
   }
 
-  // 2. Fetch subjects
-  const { data: subjects, error: subError } = await supabase
-    .from('subjects')
-    .select('*')
-
-  if (subError || !subjects || subjects.length === 0) {
-    throw new Error('Subjects not found in database.')
-  }
-
-  const subjectOrder: Record<string, number> = {
-    'general-knowledge': 1,
-    'english': 2,
-    'mathematics': 3,
-    'reasoning': 4,
-  }
-
-  const sortedSubjects = [...(subjects as Subject[])].sort((a, b) => {
-    const orderA = subjectOrder[a.slug] || 99
-    const orderB = subjectOrder[b.slug] || 99
-    return orderA - orderB
-  })
+  // 2. Get subjects (memoized per-request)
+  const sortedSubjects = await getCachedSubjects()
 
   // Selected subject: default to first subject if slug not provided
   const activeSubject =
@@ -163,7 +177,7 @@ export async function getSubjectLectures(slug?: string) {
   // 3. Fetch lectures for active subject ordered numerically
   const { data: lectures, error: lecError } = await supabase
     .from('lectures')
-    .select('*')
+    .select('id, subject_id, lecture_number, title')
     .eq('subject_id', activeSubject.id)
     .order('lecture_number', { ascending: true })
 
@@ -175,7 +189,7 @@ export async function getSubjectLectures(slug?: string) {
   const lectureIds = (lectures || []).map((l) => l.id)
   const { data: progressList, error: progError } = await supabase
     .from('lecture_progress')
-    .select('*')
+    .select('id, user_id, lecture_id, status, started_at, completed_at, updated_at')
     .eq('user_id', user.id)
     .in('lecture_id', lectureIds)
 
@@ -215,20 +229,101 @@ export async function getSubjectLectures(slug?: string) {
   }
 }
 
+/**
+ * Comprehensive tracker data loader for instant, zero-latency subject switching.
+ * Fetches all 4 subjects with all 255 lectures and the user's progress in ONE concurrent query,
+ * eliminating all 3-second network roundtrips when toggling subjects on the client.
+ */
+export async function getTrackerData(initialSlug?: string) {
+  const supabase = await createClient()
+
+  const user = await getAuthenticatedUser()
+  if (!user) {
+    return null
+  }
+
+  const [sortedSubjects, progressRes] = await Promise.all([
+    getCachedSubjectsWithLectures(),
+    supabase
+      .from('lecture_progress')
+      .select('id, user_id, lecture_id, status, started_at, completed_at, updated_at')
+      .eq('user_id', user.id),
+  ])
+
+  if (progressRes.error) {
+    throw new Error(`Failed to load progress: ${progressRes.error.message}`)
+  }
+
+  const progressRecords = progressRes.data || []
+  const progressMap = new Map<string, LectureProgress>()
+  for (const p of progressRecords) {
+    progressMap.set(p.lecture_id, p as LectureProgress)
+  }
+
+  const allLecturesBySubject: Record<string, LectureWithProgress[]> = {}
+  const subjectsWithStats: SubjectWithStats[] = []
+
+  let totalAllLectures = 0
+  let totalAllCompleted = 0
+  let totalAllInProgress = 0
+
+  for (const sub of sortedSubjects) {
+    const lecturesList = (sub.lectures || []) as Lecture[]
+    const subLectures = lecturesList.map((lec: Lecture) => ({
+      ...lec,
+      progress: progressMap.get(lec.id) || null,
+    }))
+
+    allLecturesBySubject[sub.slug] = subLectures
+
+    const completed = subLectures.filter((l: LectureWithProgress) => l.progress?.status === 'completed').length
+    const inProgress = subLectures.filter((l: LectureWithProgress) => l.progress?.status === 'in_progress').length
+    const total = sub.total_lectures
+    const remaining = Math.max(0, total - completed)
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
+
+    totalAllLectures += total
+    totalAllCompleted += completed
+    totalAllInProgress += inProgress
+
+    subjectsWithStats.push({
+      ...sub,
+      completed_count: completed,
+      in_progress_count: inProgress,
+      remaining_count: remaining,
+      progress_percentage: percentage,
+    })
+  }
+
+  const overallPercentage =
+    totalAllLectures > 0 ? Math.round((totalAllCompleted / totalAllLectures) * 100) : 0
+
+  const activeSubjectSlug =
+    initialSlug && allLecturesBySubject[initialSlug]
+      ? initialSlug
+      : sortedSubjects[0]?.slug || 'general-knowledge'
+
+  return {
+    user,
+    subjects: subjectsWithStats,
+    allLecturesBySubject,
+    overallPercentage,
+    initialSubjectSlug: activeSubjectSlug,
+  }
+}
+
 // --- PHASE 2: LECTURE NOTES & GENERAL NOTES QUERIES ---
 
 export async function getLectureDetailsWithNote(lectureId: string) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
+  // 1. Get authenticated user (memoized per-request)
+  const user = await getAuthenticatedUser()
+  if (!user) {
     return null
   }
 
+  // 2. Fetch target lecture with its subject
   const { data: lecture, error: lecError } = await supabase
     .from('lectures')
     .select('*, subjects(*)')
@@ -241,158 +336,134 @@ export async function getLectureDetailsWithNote(lectureId: string) {
 
   const subject = lecture.subjects as unknown as Subject
 
-  const { data: progress } = await supabase
-    .from('lecture_progress')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('lecture_id', lectureId)
-    .maybeSingle()
-
-  const { data: note } = await supabase
-    .from('lecture_notes')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('lecture_id', lectureId)
-    .maybeSingle()
-
-  const { data: prevLecture } = await supabase
-    .from('lectures')
-    .select('id, lecture_number, title')
-    .eq('subject_id', subject.id)
-    .lt('lecture_number', lecture.lecture_number)
-    .order('lecture_number', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  const { data: nextLecture } = await supabase
-    .from('lectures')
-    .select('id, lecture_number, title')
-    .eq('subject_id', subject.id)
-    .gt('lecture_number', lecture.lecture_number)
-    .order('lecture_number', { ascending: true })
-    .limit(1)
-    .maybeSingle()
+  // 3. Fetch user progress, note, prev lecture, and next lecture concurrently in PARALLEL
+  const [progRes, noteRes, prevRes, nextRes] = await Promise.all([
+    supabase
+      .from('lecture_progress')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('lecture_id', lectureId)
+      .maybeSingle(),
+    supabase
+      .from('lecture_notes')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('lecture_id', lectureId)
+      .maybeSingle(),
+    supabase
+      .from('lectures')
+      .select('id, lecture_number, title')
+      .eq('subject_id', subject.id)
+      .lt('lecture_number', lecture.lecture_number)
+      .order('lecture_number', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('lectures')
+      .select('id, lecture_number, title')
+      .eq('subject_id', subject.id)
+      .gt('lecture_number', lecture.lecture_number)
+      .order('lecture_number', { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+  ])
 
   return {
     user,
     lecture: lecture as Lecture,
     subject,
-    progress: (progress as LectureProgress) || null,
-    note: (note as LectureNote) || null,
-    prevLecture: prevLecture as { id: string; lecture_number: number; title: string } | null,
-    nextLecture: nextLecture as { id: string; lecture_number: number; title: string } | null,
+    progress: (progRes.data as LectureProgress) || null,
+    note: (noteRes.data as LectureNote) || null,
+    prevLecture: prevRes.data as { id: string; lecture_number: number; title: string } | null,
+    nextLecture: nextRes.data as { id: string; lecture_number: number; title: string } | null,
   }
 }
 
-export async function getLectureNotesDirectory(slug?: string) {
+export async function getLectureNotesDirectory(initialSlug?: string) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
+  // 1. Get authenticated user (memoized per-request)
+  const user = await getAuthenticatedUser()
+  if (!user) {
     return null
   }
 
-  const { data: subjects, error: subError } = await supabase
-    .from('subjects')
-    .select('*')
+  // 2. Fetch subjects with lectures, user progress, and lean notes metadata in PARALLEL
+  const [sortedSubjects, progressRes, notesRes] = await Promise.all([
+    getCachedSubjectsWithLectures(),
+    supabase
+      .from('lecture_progress')
+      .select('lecture_id, status')
+      .eq('user_id', user.id),
+    supabase
+      .from('lecture_notes')
+      .select('id, lecture_id, plain_text, updated_at')
+      .eq('user_id', user.id),
+  ])
 
-  if (subError || !subjects) {
-    throw new Error('Failed to load subjects')
+  const progressMap = new Map<string, string>()
+  for (const p of progressRes.data || []) {
+    progressMap.set(p.lecture_id, p.status)
   }
 
-  const subjectOrder: Record<string, number> = {
-    'general-knowledge': 1,
-    'english': 2,
-    'mathematics': 3,
-    'reasoning': 4,
+  const notesMap = new Map<string, any>()
+  for (const n of notesRes.data || []) {
+    notesMap.set(n.lecture_id, n)
   }
 
-  const sortedSubjects = [...(subjects as Subject[])].sort((a, b) => {
-    const orderA = subjectOrder[a.slug] || 99
-    const orderB = subjectOrder[b.slug] || 99
-    return orderA - orderB
-  })
+  const allLecturesBySubject: Record<string, (Lecture & { progress: LectureProgress | null; note: LectureNote | null })[]> = {}
+  const notesCountBySubject: Record<string, number> = {}
 
-  const activeSubject = sortedSubjects.find((s) => s.slug === slug) || sortedSubjects[0]
+  for (const sub of sortedSubjects) {
+    const lecturesList = (sub.lectures || []) as Lecture[]
+    const subLectures = lecturesList.map((lec: Lecture) => ({
+      ...lec,
+      progress: progressMap.has(lec.id)
+        ? ({ status: progressMap.get(lec.id) } as LectureProgress)
+        : null,
+      note: (notesMap.get(lec.id) as unknown as LectureNote) || null,
+    }))
 
-  const { data: lectures, error: lecError } = await supabase
-    .from('lectures')
-    .select('*')
-    .eq('subject_id', activeSubject.id)
-    .order('lecture_number', { ascending: true })
-
-  if (lecError) {
-    throw new Error('Failed to load lectures')
+    allLecturesBySubject[sub.slug] = subLectures
+    notesCountBySubject[sub.slug] = subLectures.filter(
+      (l) => l.note && (l.note.plain_text?.trim()?.length ?? 0) > 0
+    ).length
   }
 
-  const lectureIds = (lectures || []).map((l) => l.id)
+  const activeSubjectSlug =
+    initialSlug && allLecturesBySubject[initialSlug]
+      ? initialSlug
+      : sortedSubjects[0]?.slug || 'general-knowledge'
+  const activeSubject =
+    sortedSubjects.find((s) => s.slug === activeSubjectSlug) || sortedSubjects[0]
 
-  const { data: progressList } = await supabase
-    .from('lecture_progress')
-    .select('*')
-    .eq('user_id', user.id)
-    .in('lecture_id', lectureIds)
-
-  const progressMap = new Map<string, LectureProgress>()
-  for (const p of progressList || []) {
-    progressMap.set(p.lecture_id, p as LectureProgress)
-  }
-
-  const { data: notesList } = await supabase
-    .from('lecture_notes')
-    .select('*')
-    .eq('user_id', user.id)
-    .in('lecture_id', lectureIds)
-
-  const notesMap = new Map<string, LectureNote>()
-  for (const n of notesList || []) {
-    notesMap.set(n.lecture_id, n as LectureNote)
-  }
-
-  const lecturesWithDetails = (lectures as Lecture[]).map((lec) => ({
-    ...lec,
-    progress: progressMap.get(lec.id) || null,
-    note: notesMap.get(lec.id) || null,
-  }))
-
-  const notesCount = lecturesWithDetails.filter(
-    (l) => l.note && (l.note.plain_text?.trim()?.length ?? 0) > 0
-  ).length
+  const activeLectures = allLecturesBySubject[activeSubjectSlug] || []
+  const activeNotesCount = notesCountBySubject[activeSubjectSlug] || 0
 
   return {
     user,
     subjects: sortedSubjects,
     activeSubject,
-    lectures: lecturesWithDetails,
-    notesCount,
+    lectures: activeLectures,
+    notesCount: activeNotesCount,
     totalLectures: activeSubject.total_lectures,
+    allLecturesBySubject,
+    notesCountBySubject,
+    initialSubjectSlug: activeSubjectSlug,
   }
 }
 
 export async function getGeneralNotes(subjectFilter?: string, searchFilter?: string) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
+  const user = await getAuthenticatedUser()
+  if (!user) {
     return null
   }
 
-  const { data: subjects } = await supabase
-    .from('subjects')
-    .select('*')
-    .order('name')
-
   let query = supabase
     .from('general_notes')
-    .select('*, subjects(*)')
+    .select('id, user_id, subject_id, title, plain_text, updated_at, created_at, subjects(*)')
     .eq('user_id', user.id)
     .order('updated_at', { ascending: false })
 
@@ -404,16 +475,21 @@ export async function getGeneralNotes(subjectFilter?: string, searchFilter?: str
     }
   }
 
-  const { data: notes, error: notesError } = await query
+  // Fetch subjects and notes in parallel
+  const [subjects, notesRes] = await Promise.all([
+    getCachedSubjects(),
+    query,
+  ])
 
-  if (notesError) {
-    throw new Error(`Failed to load general notes: ${notesError.message}`)
+  if (notesRes.error) {
+    throw new Error(`Failed to load general notes: ${notesRes.error.message}`)
   }
 
-  let filteredNotes = (notes || []).map((n) => ({
+  let filteredNotes = (notesRes.data || []).map((n) => ({
     ...n,
+    content: null,
     subject: (n as any).subjects as Subject | null,
-  })) as GeneralNoteWithSubject[]
+  })) as unknown as GeneralNoteWithSubject[]
 
   if (searchFilter && searchFilter.trim()) {
     const q = searchFilter.toLowerCase().trim()
@@ -426,7 +502,7 @@ export async function getGeneralNotes(subjectFilter?: string, searchFilter?: str
 
   return {
     user,
-    subjects: (subjects as Subject[]) || [],
+    subjects,
     notes: filteredNotes,
   }
 }
@@ -434,30 +510,27 @@ export async function getGeneralNotes(subjectFilter?: string, searchFilter?: str
 export async function getGeneralNoteById(noteId: string) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
+  const user = await getAuthenticatedUser()
+  if (!user) {
     return null
   }
 
-  const { data: note, error: noteError } = await supabase
-    .from('general_notes')
-    .select('*, subjects(*)')
-    .eq('id', noteId)
-    .eq('user_id', user.id)
-    .single()
+  // Fetch note and subjects in parallel
+  const [noteRes, subjects] = await Promise.all([
+    supabase
+      .from('general_notes')
+      .select('*, subjects(*)')
+      .eq('id', noteId)
+      .eq('user_id', user.id)
+      .single(),
+    getCachedSubjects(),
+  ])
 
-  if (noteError || !note) {
+  if (noteRes.error || !noteRes.data) {
     return null
   }
 
-  const { data: subjects } = await supabase
-    .from('subjects')
-    .select('*')
-    .order('name')
+  const note = noteRes.data
 
   return {
     user,
@@ -465,7 +538,7 @@ export async function getGeneralNoteById(noteId: string) {
       ...note,
       subject: (note as any).subjects as Subject | null,
     } as GeneralNoteWithSubject,
-    subjects: (subjects as Subject[]) || [],
+    subjects,
   }
 }
 
@@ -474,59 +547,37 @@ export async function getGeneralNoteById(noteId: string) {
 export async function getRevisionHubData() {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
+  // 1. Get authenticated user (memoized per-request)
+  const user = await getAuthenticatedUser()
+  if (!user) {
     return null
   }
 
-  // 1. Fetch all subjects with all lectures (for session creation)
-  const { data: subjects } = await supabase
-    .from('subjects')
-    .select('*, lectures(*)')
-    .order('name')
+  // 2. Fetch subjects with lectures, user sessions, revision history, and user notes concurrently
+  const [sortedSubjects, sessionsRes, historyRes, notesRes] = await Promise.all([
+    getCachedSubjectsWithLectures(),
+    supabase
+      .from('revision_sessions')
+      .select('*, subjects(*), revision_session_lectures(count, is_revised)')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false }),
+    supabase
+      .from('revision_history')
+      .select('*, lectures(*, subjects(*))')
+      .eq('user_id', user.id)
+      .order('revised_at', { ascending: false }),
+    supabase
+      .from('lecture_notes')
+      .select('lecture_id, plain_text')
+      .eq('user_id', user.id),
+  ])
 
-  const subjectOrder: Record<string, number> = {
-    'general-knowledge': 1,
-    'english': 2,
-    'mathematics': 3,
-    'reasoning': 4,
-  }
-
-  const sortedSubjects = [...(subjects || [])].sort((a, b) => {
-    const orderA = subjectOrder[a.slug] || 99
-    const orderB = subjectOrder[b.slug] || 99
-    return orderA - orderB
-  }).map((s) => ({
-    ...s,
-    lectures: (s.lectures as Lecture[]).sort((a, b) => a.lecture_number - b.lecture_number),
-  }))
-
-  // 2. Fetch active and scheduled revision sessions
-  const { data: sessions } = await supabase
-    .from('revision_sessions')
-    .select('*, subjects(*), revision_session_lectures(count, is_revised)')
-    .eq('user_id', user.id)
-    .order('updated_at', { ascending: false })
-
-  // 3. Fetch revision history summary per lecture
-  const { data: historyRecords } = await supabase
-    .from('revision_history')
-    .select('*, lectures(*, subjects(*))')
-    .eq('user_id', user.id)
-    .order('revised_at', { ascending: false })
-
-  // 4. Also fetch user's lecture notes to know which lectures have notes
-  const { data: userNotes } = await supabase
-    .from('lecture_notes')
-    .select('lecture_id, plain_text')
-    .eq('user_id', user.id)
+  const sessions = sessionsRes.data || []
+  const historyRecords = historyRes.data || []
+  const userNotes = notesRes.data || []
 
   const notesLectureIds = new Set(
-    (userNotes || [])
+    userNotes
       .filter((n) => (n.plain_text?.trim()?.length ?? 0) > 0)
       .map((n) => n.lecture_id)
   )
@@ -542,7 +593,7 @@ export async function getRevisionHubData() {
     nextDate: string | null
   }>()
 
-  for (const h of historyRecords || []) {
+  for (const h of historyRecords) {
     const lec = (h as any).lectures as (Lecture & { subjects: Subject })
     if (!lec) continue
 
@@ -585,12 +636,12 @@ export async function getRevisionHubData() {
 
   // Group scheduled sessions by date (Overdue, Due Today, Upcoming)
   const todayStr = new Date().toISOString().slice(0, 10)
-  const scheduledSessions = (sessions || []).filter((s) => s.status === 'scheduled')
+  const scheduledSessions = sessions.filter((s) => s.status === 'scheduled')
   const overdueSessions = scheduledSessions.filter((s) => s.scheduled_date && s.scheduled_date < todayStr)
   const dueTodaySessions = scheduledSessions.filter((s) => s.scheduled_date === todayStr)
   const upcomingSessions = scheduledSessions.filter((s) => s.scheduled_date && s.scheduled_date > todayStr)
-  const inProgressSessions = (sessions || []).filter((s) => s.status === 'in_progress')
-  const completedSessions = (sessions || []).filter((s) => s.status === 'completed')
+  const inProgressSessions = sessions.filter((s) => s.status === 'in_progress')
+  const completedSessions = sessions.filter((s) => s.status === 'completed')
 
   return {
     user,
@@ -607,56 +658,59 @@ export async function getRevisionHubData() {
     difficultLectures,
     needsReRevisionLectures,
     totalRevisedLectures: revisionSummaries.length,
-    totalRevisionEvents: (historyRecords || []).length,
+    totalRevisionEvents: historyRecords.length,
   }
 }
 
 export async function getRevisionWorkspaceData(sessionId: string) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
+  // 1. Get authenticated user (memoized per-request)
+  const user = await getAuthenticatedUser()
+  if (!user) {
     return null
   }
 
-  // 1. Fetch revision session
-  const { data: session, error: sessErr } = await supabase
-    .from('revision_sessions')
-    .select('*, subjects(*)')
-    .eq('id', sessionId)
-    .eq('user_id', user.id)
-    .single()
+  // 2. Fetch revision session and session lectures in parallel
+  const [sessRes, lecRes] = await Promise.all([
+    supabase
+      .from('revision_sessions')
+      .select('*, subjects(*)')
+      .eq('id', sessionId)
+      .eq('user_id', user.id)
+      .single(),
+    supabase
+      .from('revision_session_lectures')
+      .select('*, lectures(*, subjects(*))')
+      .eq('session_id', sessionId)
+      .order('order_index', { ascending: true }),
+  ])
 
-  if (sessErr || !session) {
+  if (sessRes.error || !sessRes.data) {
     return null
   }
+  const session = sessRes.data
 
-  // 2. Fetch session lectures with lecture details and subject
-  const { data: sessionLectures, error: lecErr } = await supabase
-    .from('revision_session_lectures')
-    .select('*, lectures(*, subjects(*))')
-    .eq('session_id', sessionId)
-    .order('order_index', { ascending: true })
-
-  if (lecErr || !sessionLectures) {
+  if (lecRes.error || !lecRes.data) {
     throw new Error('Failed to load session lectures')
   }
+  const sessionLectures = lecRes.data
 
   const lectureIds = sessionLectures.map((sl) => sl.lecture_id)
 
   // 3. Fetch original lecture notes (reusing original notes without copying)
-  const { data: notesList } = await supabase
-    .from('lecture_notes')
-    .select('*')
-    .eq('user_id', user.id)
-    .in('lecture_id', lectureIds)
+  let notesList: any[] = []
+  if (lectureIds.length > 0) {
+    const { data: nList } = await supabase
+      .from('lecture_notes')
+      .select('*')
+      .eq('user_id', user.id)
+      .in('lecture_id', lectureIds)
+    notesList = nList || []
+  }
 
   const notesMap = new Map<string, LectureNote>()
-  for (const n of notesList || []) {
+  for (const n of notesList) {
     notesMap.set(n.lecture_id, n as LectureNote)
   }
 
@@ -699,62 +753,49 @@ export async function getRevisionWorkspaceData(sessionId: string) {
 export async function getDailyPlannerData(selectedDate?: string) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
+  // 1. Get authenticated user (memoized per-request)
+  const user = await getAuthenticatedUser()
+  if (!user) {
     return null
   }
 
   const todayStr = new Date().toISOString().slice(0, 10)
   const activeDate = selectedDate || todayStr
 
-  // 1. Fetch all subjects for category selector
-  const { data: subjects } = await supabase
-    .from('subjects')
-    .select('*')
-    .order('name')
+  // 2. Fetch all subjects and all user tasks in parallel
+  const [subjects, tasksRes] = await Promise.all([
+    getCachedSubjects(),
+    supabase
+      .from('study_tasks')
+      .select('*, subjects(*)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
+  ])
 
-  // 2. Fetch all user tasks
-  const { data: tasks, error: tasksErr } = await supabase
-    .from('study_tasks')
-    .select('*, subjects(*)')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-
-  if (tasksErr) {
-    throw new Error(`Failed to load study tasks: ${tasksErr.message}`)
+  if (tasksRes.error) {
+    throw new Error(`Failed to load study tasks: ${tasksRes.error.message}`)
   }
 
-  const allTasks: StudyTaskWithSubject[] = (tasks || []).map((t) => ({
+  const allTasks: StudyTaskWithSubject[] = (tasksRes.data || []).map((t) => ({
     ...t,
     subject: (t as any).subjects as Subject | null,
   }))
 
   // Categorize tasks:
-  // Today's tasks (scheduled_date === todayStr)
   const todayTasks = allTasks.filter((t) => t.scheduled_date === todayStr)
-
-  // Pending past tasks (scheduled_date < todayStr and status !== 'completed')
   const pendingPastTasks = allTasks.filter(
     (t) => t.scheduled_date < todayStr && t.status === 'pending'
   )
-
-  // Upcoming tasks (scheduled_date > todayStr and status !== 'completed')
   const upcomingTasks = allTasks.filter(
     (t) => t.scheduled_date > todayStr && t.status === 'pending'
   )
-
-  // Completed tasks
   const completedTasks = allTasks.filter((t) => t.status === 'completed')
 
   return {
     user,
     activeDate,
     todayDate: todayStr,
-    subjects: (subjects as Subject[]) || [],
+    subjects: subjects || [],
     todayTasks,
     pendingPastTasks,
     upcomingTasks,
@@ -769,56 +810,51 @@ export async function getDailyPlannerData(selectedDate?: string) {
 export async function getDashboardComprehensiveData() {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
+  // 1. Get authenticated user (memoized per-request)
+  const user = await getAuthenticatedUser()
+  if (!user) {
     return null
   }
 
-  // Fetch base dashboard metrics
-  const baseData = await getDashboardData()
-  if (!baseData) return null
-
   const todayStr = new Date().toISOString().slice(0, 10)
 
-  // Fetch today's study tasks
-  const { data: tasks } = await supabase
-    .from('study_tasks')
-    .select('*, subjects(*)')
-    .eq('user_id', user.id)
-    .eq('scheduled_date', todayStr)
-    .order('created_at', { ascending: false })
+  // 2. Fetch base dashboard metrics, today's tasks, scheduled revisions, and recent revision history in parallel
+  const [baseData, tasksRes, scheduledRes, historyRes] = await Promise.all([
+    getDashboardData(),
+    supabase
+      .from('study_tasks')
+      .select('*, subjects(*)')
+      .eq('user_id', user.id)
+      .eq('scheduled_date', todayStr)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('revision_sessions')
+      .select('*, subjects(*)')
+      .eq('user_id', user.id)
+      .eq('status', 'scheduled'),
+    supabase
+      .from('revision_history')
+      .select('*, lectures(*, subjects(*))')
+      .eq('user_id', user.id)
+      .order('revised_at', { ascending: false })
+      .limit(5),
+  ])
 
-  const todayTasks = (tasks || []).map((t) => ({
+  if (!baseData) return null
+
+  const todayTasks = (tasksRes.data || []).map((t) => ({
     ...t,
     subject: (t as any).subjects as Subject | null,
   })) as StudyTaskWithSubject[]
 
   const todayCompleted = todayTasks.filter((t) => t.status === 'completed').length
 
-  // Fetch revision summary
-  const { data: scheduled } = await supabase
-    .from('revision_sessions')
-    .select('*, subjects(*)')
-    .eq('user_id', user.id)
-    .eq('status', 'scheduled')
+  const scheduled = scheduledRes.data || []
+  const overdueRevisions = scheduled.filter((s) => s.scheduled_date && s.scheduled_date < todayStr)
+  const dueTodayRevisions = scheduled.filter((s) => s.scheduled_date === todayStr)
+  const upcomingRevisions = scheduled.filter((s) => s.scheduled_date && s.scheduled_date > todayStr)
 
-  const overdueRevisions = (scheduled || []).filter((s) => s.scheduled_date && s.scheduled_date < todayStr)
-  const dueTodayRevisions = (scheduled || []).filter((s) => s.scheduled_date === todayStr)
-  const upcomingRevisions = (scheduled || []).filter((s) => s.scheduled_date && s.scheduled_date > todayStr)
-
-  // Fetch recent revision history (last 5)
-  const { data: recentHistory } = await supabase
-    .from('revision_history')
-    .select('*, lectures(*, subjects(*))')
-    .eq('user_id', user.id)
-    .order('revised_at', { ascending: false })
-    .limit(5)
-
-  const recentRevisions = (recentHistory || []).map((h) => ({
+  const recentRevisions = (historyRes.data || []).map((h) => ({
     id: h.id,
     lectureTitle: (h as any).lectures?.title || 'Lecture',
     subjectName: (h as any).lectures?.subjects?.name || 'Subject',
@@ -846,22 +882,31 @@ export async function getDashboardComprehensiveData() {
 export async function getAnalyticsData() {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
+  // 1. Get authenticated user (memoized per-request)
+  const user = await getAuthenticatedUser()
+  if (!user) {
     return null
   }
 
-  // 1. Fetch base dashboard statistics
-  const baseData = await getDashboardData()
+  // 2. Fetch base dashboard data, revision history, and tasks in parallel
+  const [baseData, revHistoryRes, tasksRes] = await Promise.all([
+    getDashboardData(),
+    supabase
+      .from('revision_history')
+      .select('revised_at')
+      .eq('user_id', user.id)
+      .order('revised_at', { ascending: true }),
+    supabase
+      .from('study_tasks')
+      .select('status, subject_id')
+      .eq('user_id', user.id),
+  ])
+
   if (!baseData) return null
 
-  const { overallStats, subjects } = baseData
+  const { overallStats, subjects, rawProgress } = baseData
 
-  // 2. Syllabus Donut Chart Data
+  // 3. Syllabus Donut Chart Data
   const unstartedCount = Math.max(
     0,
     overallStats.total_lectures - overallStats.completed_count - overallStats.in_progress_count
@@ -873,7 +918,7 @@ export async function getAnalyticsData() {
     { name: 'Not Started', value: unstartedCount, fill: '#27272A' },
   ]
 
-  // 3. Subject-wise Comparison Bar Chart Data
+  // 4. Subject-wise Comparison Bar Chart Data
   const subjectComparison = subjects.map((s) => ({
     name: s.name,
     total: s.total_lectures,
@@ -882,18 +927,10 @@ export async function getAnalyticsData() {
     percentage: s.progress_percentage,
   }))
 
-  // 4. Completed lectures timeline from lecture_progress
-  const { data: completedProgress } = await supabase
-    .from('lecture_progress')
-    .select('completed_at')
-    .eq('user_id', user.id)
-    .eq('status', 'completed')
-    .not('completed_at', 'is', null)
-    .order('completed_at', { ascending: true })
-
+  // 5. Completed lectures timeline from already-fetched rawProgress (no redundant DB roundtrip!)
   const completedByDay = new Map<string, number>()
-  for (const p of completedProgress || []) {
-    if (p.completed_at) {
+  for (const p of rawProgress || []) {
+    if (p.status === 'completed' && p.completed_at) {
       const day = p.completed_at.slice(0, 10)
       completedByDay.set(day, (completedByDay.get(day) || 0) + 1)
     }
@@ -912,17 +949,14 @@ export async function getAnalyticsData() {
       })
     })
 
-  // 5. Revision activity timeline from revision_history
-  const { data: revHistory } = await supabase
-    .from('revision_history')
-    .select('revised_at')
-    .eq('user_id', user.id)
-    .order('revised_at', { ascending: true })
-
+  // 6. Revision activity timeline from revision_history
+  const revHistory = revHistoryRes.data || []
   const revisionByDay = new Map<string, number>()
-  for (const r of revHistory || []) {
-    const day = r.revised_at.slice(0, 10)
-    revisionByDay.set(day, (revisionByDay.get(day) || 0) + 1)
+  for (const r of revHistory) {
+    if (r.revised_at) {
+      const day = r.revised_at.slice(0, 10)
+      revisionByDay.set(day, (revisionByDay.get(day) || 0) + 1)
+    }
   }
 
   const revisionTimeline: { date: string; count: number }[] = []
@@ -932,14 +966,10 @@ export async function getAnalyticsData() {
       revisionTimeline.push({ date, count })
     })
 
-  // 6. Study tasks statistics
-  const { data: allTasks } = await supabase
-    .from('study_tasks')
-    .select('status, subject_id')
-    .eq('user_id', user.id)
-
-  const totalTasks = allTasks?.length || 0
-  const completedTasks = allTasks?.filter((t) => t.status === 'completed').length || 0
+  // 7. Study tasks statistics
+  const allTasks = tasksRes.data || []
+  const totalTasks = allTasks.length
+  const completedTasks = allTasks.filter((t) => t.status === 'completed').length
   const pendingTasks = totalTasks - completedTasks
 
   const taskStats = [
@@ -954,7 +984,7 @@ export async function getAnalyticsData() {
     subjectComparison,
     completionTimeline,
     revisionTimeline,
-    totalRevisionEvents: revHistory?.length || 0,
+    totalRevisionEvents: revHistory.length,
     taskStats,
     totalTasks,
     completedTasks,

@@ -76,17 +76,17 @@ export default async function SettingsPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-3 border-t border-zinc-800/60">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-zinc-800/60">
             <div className="flex items-center space-x-2 text-xs text-zinc-400">
-              <Shield className="w-4 h-4 text-emerald-400" />
+              <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>Row Level Security (RLS) actively isolates all personal records</span>
             </div>
 
-            <form action={logout}>
+            <form action={logout} className="w-full sm:w-auto">
               <Button
                 variant="destructive"
                 size="sm"
-                className="text-xs h-8"
+                className="text-xs h-9 sm:h-8 w-full sm:w-auto min-h-[36px]"
                 type="submit"
               >
                 <LogOut className="w-3.5 h-3.5 mr-1.5" />

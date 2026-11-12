@@ -230,7 +230,7 @@ export function PlannerClient({
           </p>
         </div>
 
-        <Button onClick={() => openCreateModal(todayDate)} className="shrink-0">
+        <Button onClick={() => openCreateModal(todayDate)} className="shrink-0 w-full sm:w-auto min-h-[40px]">
           <Plus className="w-4 h-4 mr-1.5" />
           <span>Add Study Task</span>
         </Button>
@@ -451,7 +451,7 @@ export function PlannerClient({
                     size="sm"
                     disabled={reschedulingTaskId === task.id || deletingTaskId === task.id}
                     onClick={() => handleRescheduleToToday(task)}
-                    className="h-7 text-xs border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
+                    className="h-8 sm:h-7 text-xs border-amber-500/30 text-amber-300 hover:bg-amber-500/10 min-h-[32px]"
                   >
                     {reschedulingTaskId === task.id ? (
                       <>
@@ -467,7 +467,7 @@ export function PlannerClient({
                     size="sm"
                     disabled={deletingTaskId === task.id || reschedulingTaskId === task.id}
                     onClick={() => handleDelete(task)}
-                    className="h-7 px-2 text-zinc-500 hover:text-red-400"
+                    className="h-8 sm:h-7 px-2.5 text-zinc-500 hover:text-red-400 min-h-[32px]"
                   >
                     {deletingTaskId === task.id ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin text-red-400" />
@@ -620,7 +620,7 @@ function TaskRow({
           size="sm"
           onClick={onEdit}
           disabled={isToggling || isDeleting}
-          className="h-7 px-2 text-zinc-500 hover:text-white"
+          className="h-8 sm:h-7 px-2.5 sm:px-2 text-zinc-500 hover:text-white min-h-[32px] min-w-[32px]"
         >
           <Edit2 className="w-3.5 h-3.5" />
         </Button>
@@ -629,7 +629,7 @@ function TaskRow({
           size="sm"
           onClick={onDelete}
           disabled={isToggling || isDeleting}
-          className="h-7 px-2 text-zinc-500 hover:text-red-400"
+          className="h-8 sm:h-7 px-2.5 sm:px-2 text-zinc-500 hover:text-red-400 min-h-[32px] min-w-[32px]"
         >
           {isDeleting ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin text-red-400" />

@@ -33,8 +33,8 @@ export function AiConsentModal({ isOpen, onClose, onConsentGranted }: AiConsentM
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg bg-[#11141D] border border-white/10 rounded-2xl shadow-2xl p-6 md:p-8 text-zinc-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-lg bg-[#11141D] border border-white/10 rounded-2xl shadow-2xl p-4.5 sm:p-6 md:p-8 text-zinc-100">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"

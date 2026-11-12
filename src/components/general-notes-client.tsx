@@ -135,7 +135,7 @@ export function GeneralNotesClient({
           </p>
         </div>
 
-        <Button onClick={handleCreateNote} disabled={isCreating} className="shrink-0">
+        <Button onClick={handleCreateNote} disabled={isCreating} className="shrink-0 w-full sm:w-auto min-h-[40px]">
           {isCreating ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -152,12 +152,12 @@ export function GeneralNotesClient({
 
       {/* Subject Filter Pills and Search */}
       <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
-        <div className="flex flex-wrap gap-1.5 p-1 rounded-lg bg-[#11141D] border border-zinc-800">
+        <div className="flex overflow-x-auto no-scrollbar gap-1.5 p-1 rounded-lg bg-[#11141D] border border-zinc-800 shrink-0">
           <button
             onClick={() => setSelectedSubjectId('all')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[34px] ${
               selectedSubjectId === 'all'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-blue-600 text-white font-semibold'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -169,9 +169,9 @@ export function GeneralNotesClient({
               <button
                 key={s.id}
                 onClick={() => setSelectedSubjectId(s.id)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[34px] ${
                   selectedSubjectId === s.id
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-blue-600 text-white font-semibold'
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
@@ -181,9 +181,9 @@ export function GeneralNotesClient({
           })}
           <button
             onClick={() => setSelectedSubjectId('uncategorized')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[34px] ${
               selectedSubjectId === 'uncategorized'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-blue-600 text-white font-semibold'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -197,7 +197,7 @@ export function GeneralNotesClient({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search general notes..."
-            className="pl-9 h-9 text-xs"
+            className="pl-9 h-10 sm:h-9 text-xs"
           />
         </div>
       </div>

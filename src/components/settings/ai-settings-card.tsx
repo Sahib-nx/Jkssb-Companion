@@ -103,14 +103,14 @@ export function AiSettingsCard({ initialPreferences }: AiSettingsCardProps) {
             <div>Free-tier rate limits and strict user session isolation apply.</div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto justify-end">
             {prefs.consent_given && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleRevokeConsent}
                 disabled={isUpdating}
-                className="h-8 text-xs border-zinc-800 text-zinc-400 hover:text-white"
+                className="h-9 sm:h-8 text-xs border-zinc-800 text-zinc-400 hover:text-white flex-1 sm:flex-initial min-h-[36px]"
               >
                 <RotateCcw className="w-3 h-3 mr-1" />
                 Revoke Consent
@@ -122,7 +122,7 @@ export function AiSettingsCard({ initialPreferences }: AiSettingsCardProps) {
               size="sm"
               onClick={handleToggleAi}
               disabled={isUpdating}
-              className={`h-8 text-xs font-medium ${
+              className={`h-9 sm:h-8 text-xs font-medium flex-1 sm:flex-initial min-h-[36px] ${
                 prefs.ai_enabled ? '' : 'bg-purple-600 hover:bg-purple-500 text-white'
               }`}
             >

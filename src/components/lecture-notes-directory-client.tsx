@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { Subject, Lecture, LectureProgress, LectureNote } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -19,50 +19,83 @@ import {
   Calendar,
 } from 'lucide-react'
 
-type LectureWithNoteDetails = Lecture & {
+export type LectureWithNoteDetails = Lecture & {
   progress: LectureProgress | null
   note: LectureNote | null
 }
 
 interface LectureNotesDirectoryClientProps {
   subjects: Subject[]
-  activeSubject: Subject
-  lectures: LectureWithNoteDetails[]
-  notesCount: number
-  totalLectures: number
+  allLecturesBySubject?: Record<string, LectureWithNoteDetails[]>
+  notesCountBySubject?: Record<string, number>
+  initialSubjectSlug?: string
+  activeSubject?: Subject
+  lectures?: LectureWithNoteDetails[]
+  notesCount?: number
+  totalLectures?: number
 }
 
 export function LectureNotesDirectoryClient({
   subjects,
-  activeSubject,
-  lectures,
-  notesCount,
-  totalLectures,
+  allLecturesBySubject,
+  notesCountBySubject,
+  initialSubjectSlug,
+  activeSubject: fallbackActiveSubject,
+  lectures: fallbackLectures,
+  notesCount: fallbackNotesCount,
+  totalLectures: fallbackTotalLectures,
 }: LectureNotesDirectoryClientProps) {
+  const [activeSubjectSlug, setActiveSubjectSlug] = useState<string>(
+    initialSubjectSlug || fallbackActiveSubject?.slug || subjects[0]?.slug || 'general-knowledge'
+  )
   const [filter, setFilter] = useState<'all' | 'has_notes' | 'no_notes'>('all')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const notesPercentage =
-    totalLectures > 0 ? Math.round((notesCount / totalLectures) * 100) : 0
-
-  const filteredLectures = lectures.filter((lec) => {
-    const hasNote = Boolean(lec.note && (lec.note.plain_text?.trim()?.length ?? 0) > 0)
-
-    if (filter === 'has_notes' && !hasNote) return false
-    if (filter === 'no_notes' && hasNote) return false
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim()
-      const titleMatch = lec.title.toLowerCase().includes(q)
-      const numMatch = lec.lecture_number.toString().includes(q)
-      const textMatch = lec.note?.plain_text?.toLowerCase().includes(q)
-      return titleMatch || numMatch || textMatch
+  // Instant subject switch with zero network delay & URL synchronization
+  const handleSubjectChange = (slug: string) => {
+    if (slug === activeSubjectSlug) return
+    setActiveSubjectSlug(slug)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.set('subject', slug)
+      window.history.replaceState(null, '', url.toString())
     }
+  }
 
-    return true
-  })
+  const activeSubject =
+    subjects.find((s) => s.slug === activeSubjectSlug) || fallbackActiveSubject || subjects[0]
+  const currentLectures =
+    (allLecturesBySubject && allLecturesBySubject[activeSubjectSlug]) || fallbackLectures || []
+  const currentNotesCount =
+    notesCountBySubject && notesCountBySubject[activeSubjectSlug] !== undefined
+      ? notesCountBySubject[activeSubjectSlug]
+      : (fallbackNotesCount ?? 0)
+  const totalLectures =
+    activeSubject.total_lectures || fallbackTotalLectures || currentLectures.length
 
-  const formatDate = (dateStr?: string | null) => {
+  const notesPercentage =
+    totalLectures > 0 ? Math.round((currentNotesCount / totalLectures) * 100) : 0
+
+  const filteredLectures = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim()
+    return currentLectures.filter((lec) => {
+      const hasNote = Boolean(lec.note && (lec.note.plain_text?.trim()?.length ?? 0) > 0)
+
+      if (filter === 'has_notes' && !hasNote) return false
+      if (filter === 'no_notes' && hasNote) return false
+
+      if (q) {
+        const titleMatch = lec.title.toLowerCase().includes(q)
+        const numMatch = lec.lecture_number.toString().includes(q)
+        const textMatch = lec.note?.plain_text?.toLowerCase().includes(q)
+        return titleMatch || numMatch || textMatch
+      }
+
+      return true
+    })
+  }, [currentLectures, filter, searchQuery])
+
+  const formatDate = useCallback((dateStr?: string | null) => {
     if (!dateStr) return ''
     try {
       const d = new Date(dateStr)
@@ -73,33 +106,34 @@ export function LectureNotesDirectoryClient({
     } catch {
       return ''
     }
-  }
+  }, [])
 
   return (
     <div className="space-y-6">
-      {/* Subject Navigation Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-zinc-800/80 pb-3">
+      {/* Subject Navigation Tabs with Instant Switching */}
+      <div className="flex overflow-x-auto no-scrollbar gap-2 border-b border-zinc-800/80 pb-3 -mx-3.5 px-3.5 sm:mx-0 sm:px-0 sm:flex-wrap">
         {subjects.map((sub) => {
-          const isActive = sub.slug === activeSubject.slug
+          const isActive = sub.slug === activeSubjectSlug
           return (
-            <Link
+            <button
               key={sub.id}
-              href={`/dashboard/lecture-notes?subject=${sub.slug}`}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 ${
+              type="button"
+              onClick={() => handleSubjectChange(sub.slug)}
+              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-150 flex items-center space-x-2 shrink-0 min-h-[38px] cursor-pointer ${
                 isActive
-                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30 font-semibold'
-                  : 'bg-[#11141D] text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30 font-semibold ring-1 ring-blue-400/40'
+                  : 'bg-[#11141D] text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 active:scale-[0.98]'
               }`}
             >
               <span>{sub.name}</span>
               <span
-                className={`text-xs px-2 py-0.5 rounded-full ${
+                className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
                   isActive ? 'bg-blue-700 text-blue-100' : 'bg-zinc-800 text-zinc-400'
                 }`}
               >
                 {sub.total_lectures}
               </span>
-            </Link>
+            </button>
           )
         })}
       </div>
@@ -113,7 +147,7 @@ export function LectureNotesDirectoryClient({
                 {activeSubject.name} — Study Notes Directory
               </CardTitle>
               <CardDescription className="text-xs text-zinc-400 mt-1">
-                {notesCount} of {totalLectures} lectures have study notes recorded
+                {currentNotesCount} of {totalLectures} lectures have study notes recorded
               </CardDescription>
             </div>
             <div className="text-right">
@@ -133,36 +167,36 @@ export function LectureNotesDirectoryClient({
 
       {/* Search and Filter Row */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        <div className="flex gap-1.5 p-1 rounded-lg bg-[#11141D] border border-zinc-800">
+        <div className="flex overflow-x-auto no-scrollbar gap-1.5 p-1 rounded-lg bg-[#11141D] border border-zinc-800 shrink-0">
           <button
             onClick={() => setFilter('all')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[34px] ${
               filter === 'all'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-blue-600 text-white font-semibold'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            All ({lectures.length})
+            All ({currentLectures.length})
           </button>
           <button
             onClick={() => setFilter('has_notes')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[34px] ${
               filter === 'has_notes'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-blue-600 text-white font-semibold'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            Has Notes ({notesCount})
+            Has Notes ({currentNotesCount})
           </button>
           <button
             onClick={() => setFilter('no_notes')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[34px] ${
               filter === 'no_notes'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-blue-600 text-white font-semibold'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            No Notes Yet ({totalLectures - notesCount})
+            No Notes Yet ({Math.max(0, totalLectures - currentNotesCount)})
           </button>
         </div>
 
@@ -172,7 +206,7 @@ export function LectureNotesDirectoryClient({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search notes or lecture #..."
-            className="pl-9 h-9 text-xs"
+            className="pl-9 h-10 sm:h-9 text-xs"
           />
         </div>
       </div>
@@ -240,12 +274,12 @@ export function LectureNotesDirectoryClient({
 
                 <Link
                   href={`/dashboard/lectures/${lecture.id}`}
-                  className="shrink-0 self-end sm:self-center"
+                  className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0"
                 >
                   <Button
                     variant={hasNote ? 'secondary' : 'outline'}
                     size="sm"
-                    className="h-8 text-xs font-medium"
+                    className="h-9 sm:h-8 text-xs font-medium w-full sm:w-auto min-h-[36px]"
                   >
                     <span>{hasNote ? 'Open Notes' : 'Write Notes'}</span>
                     <ArrowRight className="w-3.5 h-3.5 ml-1.5" />

@@ -141,10 +141,10 @@ export function RevisionCreator({
   }
 
   return (
-    <div className="rounded-xl border border-zinc-800/80 bg-[#11141D] p-5 sm:p-6 space-y-5">
+    <div className="rounded-xl border border-zinc-800/80 bg-[#11141D] p-4 sm:p-6 space-y-4 sm:space-y-5">
       <div className="flex items-center justify-between border-b border-zinc-800/70 pb-3">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
@@ -169,7 +169,7 @@ export function RevisionCreator({
                   setCustomSelectedIds([])
                   setSingleLectureId(sub.lectures[0]?.id || '')
                 }}
-                className={`p-2.5 rounded-lg border text-left transition-all ${
+                className={`p-2.5 rounded-lg border text-left transition-all min-h-[46px] ${
                   isSelected
                     ? 'bg-blue-600/15 border-blue-500/40 text-white font-medium'
                     : 'bg-[#0E1118] border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
@@ -192,52 +192,52 @@ export function RevisionCreator({
           <button
             type="button"
             onClick={() => setMode('range')}
-            className={`p-2.5 rounded-lg border text-center transition-all ${
+            className={`p-2.5 rounded-lg border text-center transition-all min-h-[50px] flex flex-col items-center justify-center ${
               mode === 'range'
                 ? 'bg-blue-600/20 border-blue-500 text-white font-medium'
                 : 'bg-[#0E1118] border-zinc-800 text-zinc-400 hover:text-white'
             }`}
           >
-            <Layers className="w-4 h-4 mx-auto mb-1 text-blue-400" />
+            <Layers className="w-4 h-4 mb-1 text-blue-400 shrink-0" />
             <span className="text-xs block">Lecture Range</span>
           </button>
 
           <button
             type="button"
             onClick={() => setMode('entire_subject')}
-            className={`p-2.5 rounded-lg border text-center transition-all ${
+            className={`p-2.5 rounded-lg border text-center transition-all min-h-[50px] flex flex-col items-center justify-center ${
               mode === 'entire_subject'
                 ? 'bg-blue-600/20 border-blue-500 text-white font-medium'
                 : 'bg-[#0E1118] border-zinc-800 text-zinc-400 hover:text-white'
             }`}
           >
-            <BookOpen className="w-4 h-4 mx-auto mb-1 text-blue-400" />
+            <BookOpen className="w-4 h-4 mb-1 text-blue-400 shrink-0" />
             <span className="text-xs block">Entire Subject</span>
           </button>
 
           <button
             type="button"
             onClick={() => setMode('custom')}
-            className={`p-2.5 rounded-lg border text-center transition-all ${
+            className={`p-2.5 rounded-lg border text-center transition-all min-h-[50px] flex flex-col items-center justify-center ${
               mode === 'custom'
                 ? 'bg-blue-600/20 border-blue-500 text-white font-medium'
                 : 'bg-[#0E1118] border-zinc-800 text-zinc-400 hover:text-white'
             }`}
           >
-            <ListFilter className="w-4 h-4 mx-auto mb-1 text-blue-400" />
+            <ListFilter className="w-4 h-4 mb-1 text-blue-400 shrink-0" />
             <span className="text-xs block">Custom Pick</span>
           </button>
 
           <button
             type="button"
             onClick={() => setMode('single')}
-            className={`p-2.5 rounded-lg border text-center transition-all ${
+            className={`p-2.5 rounded-lg border text-center transition-all min-h-[50px] flex flex-col items-center justify-center ${
               mode === 'single'
                 ? 'bg-blue-600/20 border-blue-500 text-white font-medium'
                 : 'bg-[#0E1118] border-zinc-800 text-zinc-400 hover:text-white'
             }`}
           >
-            <Play className="w-4 h-4 mx-auto mb-1 text-blue-400" />
+            <Play className="w-4 h-4 mb-1 text-blue-400 shrink-0" />
             <span className="text-xs block">Single Lecture</span>
           </button>
         </div>
@@ -419,7 +419,7 @@ export function RevisionCreator({
         <Button
           onClick={handleStartRevision}
           disabled={isCreating || selectedLectures.length === 0}
-          className="shrink-0"
+          className="shrink-0 w-full sm:w-auto min-h-[40px]"
         >
           {isCreating ? (
             <>

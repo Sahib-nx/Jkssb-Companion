@@ -1,5 +1,21 @@
 import { getAnalyticsData } from '@/lib/data'
-import { AnalyticsClient } from '@/components/analytics-client'
+import dynamic from 'next/dynamic'
+
+const AnalyticsClient = dynamic(
+  () => import('@/components/analytics-client').then((m) => m.AnalyticsClient),
+  {
+    loading: () => (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-20 bg-zinc-800/40 rounded-xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-5 h-72 bg-zinc-800/40 rounded-xl" />
+          <div className="lg:col-span-7 h-72 bg-zinc-800/40 rounded-xl" />
+        </div>
+        <div className="h-80 bg-zinc-800/40 rounded-xl" />
+      </div>
+    ),
+  }
+)
 
 export default async function AnalyticsPage() {
   const data = await getAnalyticsData()

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import {
   ResponsiveContainer,
   PieChart,
@@ -79,6 +80,11 @@ export function AnalyticsClient({
   totalTasks,
   completedTasks,
 }: AnalyticsClientProps) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const taskCompletionRate =
     totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
@@ -210,7 +216,7 @@ export function AnalyticsClient({
               </ResponsiveContainer>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 text-center pt-2 text-xs border-t border-zinc-800/60 mt-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center pt-2 text-xs border-t border-zinc-800/60 mt-2">
               {subjectComparison.map((s) => (
                 <div key={s.name}>
                   <span className="text-white font-bold text-xs block truncate">{s.name}</span>
@@ -376,20 +382,20 @@ export function AnalyticsClient({
               )}
             </div>
 
-            <div className="md:col-span-2 grid grid-cols-3 gap-3 text-center">
-              <div className="p-4 rounded-xl bg-[#0B0D12] border border-zinc-800/80">
-                <span className="text-2xl font-bold text-white block">{totalTasks}</span>
-                <span className="text-xs text-zinc-400 mt-1 block">Total Tasks</span>
+            <div className="md:col-span-2 grid grid-cols-3 gap-2 sm:gap-3 text-center">
+              <div className="p-3 sm:p-4 rounded-xl bg-[#0B0D12] border border-zinc-800/80">
+                <span className="text-xl sm:text-2xl font-bold text-white block">{totalTasks}</span>
+                <span className="text-[11px] sm:text-xs text-zinc-400 mt-1 block">Total Tasks</span>
               </div>
-              <div className="p-4 rounded-xl bg-[#0B0D12] border border-zinc-800/80">
-                <span className="text-2xl font-bold text-blue-400 block">{completedTasks}</span>
-                <span className="text-xs text-zinc-400 mt-1 block">Completed</span>
+              <div className="p-3 sm:p-4 rounded-xl bg-[#0B0D12] border border-zinc-800/80">
+                <span className="text-xl sm:text-2xl font-bold text-blue-400 block">{completedTasks}</span>
+                <span className="text-[11px] sm:text-xs text-zinc-400 mt-1 block">Completed</span>
               </div>
-              <div className="p-4 rounded-xl bg-[#0B0D12] border border-zinc-800/80">
-                <span className="text-2xl font-bold text-purple-400 block">
+              <div className="p-3 sm:p-4 rounded-xl bg-[#0B0D12] border border-zinc-800/80">
+                <span className="text-xl sm:text-2xl font-bold text-purple-400 block">
                   {taskCompletionRate}%
                 </span>
-                <span className="text-xs text-zinc-400 mt-1 block">Success Rate</span>
+                <span className="text-[11px] sm:text-xs text-zinc-400 mt-1 block">Success Rate</span>
               </div>
             </div>
           </div>

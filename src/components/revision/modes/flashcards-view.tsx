@@ -178,7 +178,7 @@ export function FlashcardsView({
           {/* Flip Card Canvas */}
           <div
             onClick={() => setIsFlipped(!isFlipped)}
-            className="cursor-pointer min-h-[260px] p-8 rounded-2xl bg-[#11141D] border border-white/10 hover:border-emerald-500/40 transition-all flex flex-col justify-between shadow-xl relative overflow-hidden group select-none"
+            className="cursor-pointer min-h-[260px] p-5 sm:p-8 rounded-2xl bg-[#11141D] border border-white/10 hover:border-emerald-500/40 transition-all flex flex-col justify-between shadow-xl relative overflow-hidden group select-none"
           >
             {/* Top Bar: Category and Flip Prompt */}
             <div className="flex items-center justify-between">
@@ -230,29 +230,15 @@ export function FlashcardsView({
             </div>
           </div>
 
-          {/* Rating & Navigation Controls */}
-          <div className="flex items-center justify-between gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setIsFlipped(false)
-                setCurrentIndex((i) => Math.max(0, i - 1))
-              }}
-              disabled={currentIndex === 0}
-              className="text-xs border-white/10 text-zinc-300 hover:text-white"
-            >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              Prev
-            </Button>
-
-            <div className="flex items-center space-x-2">
+          {/* Rating & Navigation Controls - 2-tier on mobile to prevent overflow */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <div className="flex items-center space-x-2 order-1 sm:order-2">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => handleMarkStatus('needs_revision')}
-                className={`text-xs border-amber-500/30 text-amber-300 hover:bg-amber-500/10 ${
-                  statusMap[currentCard.id] === 'needs_revision' ? 'bg-amber-500/20' : ''
+                className={`text-xs border-amber-500/30 text-amber-300 hover:bg-amber-500/10 flex-1 sm:flex-initial h-9 sm:h-8 min-h-[36px] ${
+                  statusMap[currentCard.id] === 'needs_revision' ? 'bg-amber-500/20 font-semibold' : ''
                 }`}
               >
                 Needs Revision
@@ -261,8 +247,8 @@ export function FlashcardsView({
                 size="sm"
                 variant="outline"
                 onClick={() => handleMarkStatus('remembered')}
-                className={`text-xs border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10 ${
-                  statusMap[currentCard.id] === 'remembered' ? 'bg-emerald-500/20' : ''
+                className={`text-xs border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10 flex-1 sm:flex-initial h-9 sm:h-8 min-h-[36px] ${
+                  statusMap[currentCard.id] === 'remembered' ? 'bg-emerald-500/20 font-semibold' : ''
                 }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
@@ -270,19 +256,35 @@ export function FlashcardsView({
               </Button>
             </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setIsFlipped(false)
-                setCurrentIndex((i) => Math.min(cards.length - 1, i + 1))
-              }}
-              disabled={currentIndex === cards.length - 1}
-              className="text-xs border-white/10 text-zinc-300 hover:text-white"
-            >
-              Next
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
+            <div className="flex items-center justify-between space-x-2 order-2 sm:order-1 sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsFlipped(false)
+                  setCurrentIndex((i) => Math.max(0, i - 1))
+                }}
+                disabled={currentIndex === 0}
+                className="text-xs border-white/10 text-zinc-300 hover:text-white flex-1 sm:flex-initial h-9 sm:h-8 min-h-[36px]"
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Prev
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsFlipped(false)
+                  setCurrentIndex((i) => Math.min(cards.length - 1, i + 1))
+                }}
+                disabled={currentIndex === cards.length - 1}
+                className="text-xs border-white/10 text-zinc-300 hover:text-white flex-1 sm:flex-initial h-9 sm:h-8 min-h-[36px]"
+              >
+                Next
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
           </div>
         </div>
       )}

@@ -256,7 +256,7 @@ export function RevisionWorkspaceClient({
           variant="outline"
           size="sm"
           onClick={() => setDrawerOpen(!drawerOpen)}
-          className="text-xs shrink-0 border-zinc-800"
+          className="text-xs shrink-0 border-zinc-800 w-full sm:w-auto min-h-[36px]"
         >
           <Layers className="w-3.5 h-3.5 mr-1.5 text-blue-400" />
           <span>Lecture Overview ({session.revised_count}/{session.total_lectures})</span>
@@ -316,7 +316,7 @@ export function RevisionWorkspaceClient({
             </div>
 
             {/* Revision Workspace Canvas (Original Notes & AI Modes 1-6) */}
-            <div className="p-6 sm:p-8 min-h-[420px]">
+            <div className="p-4 sm:p-6 lg:p-8 min-h-[420px]">
               <RevisionAiModes
                 lectureId={currentItem?.lecture_id || ''}
                 lectureTitle={currentItem?.lecture.title || ''}
@@ -359,7 +359,7 @@ export function RevisionWorkspaceClient({
             </div>
 
             {/* Bottom Workspace Action Bar */}
-            <div className="p-4 border-t border-zinc-800/80 bg-[#0E1118] flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="p-3 sm:p-4 border-t border-zinc-800/80 bg-[#0E1118] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               {/* Prev / Next controls */}
               <div className="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-start">
                 <Button
@@ -367,7 +367,7 @@ export function RevisionWorkspaceClient({
                   size="sm"
                   disabled={currentIndex === 0}
                   onClick={() => handleSelectLecture(currentIndex - 1)}
-                  className="h-8 text-xs border-zinc-800"
+                  className="h-9 sm:h-8 text-xs border-zinc-800 flex-1 sm:flex-initial min-h-[36px]"
                 >
                   <ChevronLeft className="w-3.5 h-3.5 mr-1" />
                   Prev
@@ -378,7 +378,7 @@ export function RevisionWorkspaceClient({
                   size="sm"
                   disabled={currentIndex === session.lectures.length - 1}
                   onClick={() => handleSelectLecture(currentIndex + 1)}
-                  className="h-8 text-xs border-zinc-800"
+                  className="h-9 sm:h-8 text-xs border-zinc-800 flex-1 sm:flex-initial min-h-[36px]"
                 >
                   Next
                   <ChevronRight className="w-3.5 h-3.5 ml-1" />
@@ -386,17 +386,17 @@ export function RevisionWorkspaceClient({
               </div>
 
               {/* Revision Feedback Buttons */}
-              <div className="flex items-center space-x-2 w-full sm:w-auto justify-end flex-wrap gap-y-2">
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto justify-end">
                 {/* Mark as Difficult toggle */}
                 <Button
                   variant={isDifficult ? 'destructive' : 'outline'}
                   size="sm"
                   onClick={() => setIsDifficult(!isDifficult)}
-                  className="h-8 text-xs border-zinc-800"
+                  className="h-9 sm:h-8 text-xs border-zinc-800 flex-1 sm:flex-initial min-h-[36px]"
                   title="Flag as difficult to review again later"
                 >
                   <AlertTriangle className="w-3.5 h-3.5 mr-1" />
-                  {isDifficult ? 'Difficult ✓' : 'Mark Difficult'}
+                  <span>{isDifficult ? 'Difficult ✓' : 'Difficult'}</span>
                 </Button>
 
                 {/* Mark for Re-Revision toggle */}
@@ -407,13 +407,13 @@ export function RevisionWorkspaceClient({
                     setNeedsReRevision(!needsReRevision)
                     setShowDatePicker(!needsReRevision)
                   }}
-                  className={`h-8 text-xs border-zinc-800 ${
+                  className={`h-9 sm:h-8 text-xs border-zinc-800 flex-1 sm:flex-initial min-h-[36px] ${
                     needsReRevision ? 'text-amber-300 border-amber-500/40' : ''
                   }`}
                   title="Schedule another revision for this lecture"
                 >
                   <RotateCcw className="w-3.5 h-3.5 mr-1" />
-                  {needsReRevision ? 'Re-Revise ✓' : 'Need Re-Revision'}
+                  <span>{needsReRevision ? 'Re-Revise ✓' : 'Re-Revise'}</span>
                 </Button>
 
                 {/* Mark as Revised & Advance */}
@@ -421,7 +421,7 @@ export function RevisionWorkspaceClient({
                   size="sm"
                   disabled={isPending}
                   onClick={() => handleMarkRevised(true)}
-                  className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500 font-semibold"
+                  className="h-9 sm:h-8 text-xs bg-emerald-600 hover:bg-emerald-500 font-semibold w-full sm:w-auto min-h-[36px]"
                 >
                   {isPending ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />

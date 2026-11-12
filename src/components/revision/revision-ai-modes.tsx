@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import {
   FileText,
   Sparkles,
@@ -9,15 +10,45 @@ import {
   KeyRound,
   HelpCircle,
   Search,
+  Loader2,
 } from 'lucide-react'
-import { QuickRevisionView } from './modes/quick-revision-view'
-import { ActiveRecallView } from './modes/active-recall-view'
-import { FlashcardsView } from './modes/flashcards-view'
-import { ImportantPointsView } from './modes/important-points-view'
-import { WeakAreasView } from './modes/weak-areas-view'
-import { KnowledgeGapsView } from './modes/knowledge-gaps-view'
-import { AiConsentModal } from '@/components/ai/ai-consent-modal'
 import { RecallRating } from '@/lib/spaced-repetition'
+
+const ModeLoadingFallback = () => (
+  <div className="flex items-center justify-center p-12 text-zinc-500">
+    <Loader2 className="w-5 h-5 animate-spin mr-2 text-blue-400" />
+    <span className="text-sm">Loading AI revision mode...</span>
+  </div>
+)
+
+const QuickRevisionView = dynamic(
+  () => import('./modes/quick-revision-view').then((m) => m.QuickRevisionView),
+  { loading: ModeLoadingFallback, ssr: false }
+)
+const ActiveRecallView = dynamic(
+  () => import('./modes/active-recall-view').then((m) => m.ActiveRecallView),
+  { loading: ModeLoadingFallback, ssr: false }
+)
+const FlashcardsView = dynamic(
+  () => import('./modes/flashcards-view').then((m) => m.FlashcardsView),
+  { loading: ModeLoadingFallback, ssr: false }
+)
+const ImportantPointsView = dynamic(
+  () => import('./modes/important-points-view').then((m) => m.ImportantPointsView),
+  { loading: ModeLoadingFallback, ssr: false }
+)
+const WeakAreasView = dynamic(
+  () => import('./modes/weak-areas-view').then((m) => m.WeakAreasView),
+  { loading: ModeLoadingFallback, ssr: false }
+)
+const KnowledgeGapsView = dynamic(
+  () => import('./modes/knowledge-gaps-view').then((m) => m.KnowledgeGapsView),
+  { loading: ModeLoadingFallback, ssr: false }
+)
+const AiConsentModal = dynamic(
+  () => import('@/components/ai/ai-consent-modal').then((m) => m.AiConsentModal),
+  { ssr: false }
+)
 
 export type RevisionTab =
   | 'notes'
@@ -94,9 +125,9 @@ export function RevisionAiModes({
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all shrink-0 min-h-[36px] ${
                 isActive
-                  ? 'bg-purple-600 text-white shadow-sm'
+                  ? 'bg-purple-600 text-white shadow-sm font-semibold'
                   : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -113,7 +144,7 @@ export function RevisionAiModes({
       {/* Tab Content Views */}
       <div className="min-h-[400px]">
         {activeTab === 'notes' && (
-          <div className="p-6 md:p-8 rounded-xl border border-white/10 bg-[#11141D] shadow-sm">
+          <div className="p-4 sm:p-6 md:p-8 rounded-xl border border-white/10 bg-[#11141D] shadow-sm">
             {renderOriginalNotes()}
           </div>
         )}
@@ -177,14 +208,16 @@ export function RevisionAiModes({
       </div>
 
       {/* Consent Modal */}
-      <AiConsentModal
-        isOpen={isConsentOpen}
-        onClose={() => {
-          setIsConsentOpen(false)
-          setPendingTab(null)
-        }}
-        onConsentGranted={handleConsentGranted}
-      />
+      {isConsentOpen && (
+        <AiConsentModal
+          isOpen={isConsentOpen}
+          onClose={() => {
+            setIsConsentOpen(false)
+            setPendingTab(null)
+          }}
+          onConsentGranted={handleConsentGranted}
+        />
+      )}
     </div>
   )
 }

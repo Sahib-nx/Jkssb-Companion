@@ -8,7 +8,7 @@ import {
   RevisionSession,
   LectureRevisionSummary,
 } from '@/types/database'
-import { RevisionCreator } from '@/components/revision-creator'
+import dynamic from 'next/dynamic'
 import { deleteRevisionSession } from '@/app/dashboard/revision/actions'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +29,19 @@ import {
   Loader2,
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
+
+const RevisionCreator = dynamic(
+  () => import('@/components/revision-creator').then((m) => m.RevisionCreator),
+  {
+    loading: () => (
+      <div className="p-8 rounded-xl border border-zinc-800 bg-[#11141D] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-blue-400 mr-2" />
+        <span className="text-sm text-zinc-400">Loading Revision Creator...</span>
+      </div>
+    ),
+    ssr: false,
+  }
+)
 
 interface RevisionHubClientProps {
   subjects: (Subject & { lectures: Lecture[] })[]
@@ -118,7 +131,7 @@ export function RevisionHubClient({
 
         <Button
           onClick={() => setShowCreator(!showCreator)}
-          className="shrink-0"
+          className="shrink-0 w-full sm:w-auto min-h-[40px]"
         >
           {showCreator ? (
             <span>Close Creator</span>
@@ -200,12 +213,12 @@ export function RevisionHubClient({
       </div>
 
       {/* Main Tabs Navigation */}
-      <div className="flex flex-wrap gap-1.5 p-1 rounded-lg bg-[#11141D] border border-zinc-800">
+      <div className="flex overflow-x-auto no-scrollbar gap-1.5 p-1 rounded-lg bg-[#11141D] border border-zinc-800 shrink-0">
         <button
           onClick={() => setActiveTab('active')}
-          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+          className={`px-3 py-2 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[36px] ${
             activeTab === 'active'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-blue-600 text-white font-semibold'
               : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
@@ -213,9 +226,9 @@ export function RevisionHubClient({
         </button>
         <button
           onClick={() => setActiveTab('scheduled')}
-          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+          className={`px-3 py-2 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[36px] ${
             activeTab === 'scheduled'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-blue-600 text-white font-semibold'
               : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
@@ -223,9 +236,9 @@ export function RevisionHubClient({
         </button>
         <button
           onClick={() => setActiveTab('difficult')}
-          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+          className={`px-3 py-2 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[36px] ${
             activeTab === 'difficult'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-blue-600 text-white font-semibold'
               : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
@@ -233,9 +246,9 @@ export function RevisionHubClient({
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+          className={`px-3 py-2 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[36px] ${
             activeTab === 'history'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-blue-600 text-white font-semibold'
               : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
@@ -327,7 +340,7 @@ export function RevisionHubClient({
                 {scheduledSessions.overdue.map((s) => (
                   <div
                     key={s.id}
-                    className="p-3.5 rounded-xl border border-red-500/20 bg-red-500/5 flex items-center justify-between"
+                    className="p-3.5 rounded-xl border border-red-500/20 bg-red-500/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                   >
                     <div>
                       <p className="text-sm font-semibold text-white">{s.title}</p>
@@ -335,8 +348,8 @@ export function RevisionHubClient({
                         Was scheduled for: {formatDate(s.scheduled_date)}
                       </p>
                     </div>
-                    <Link href={`/dashboard/revision/workspace/${s.id}`}>
-                      <Button size="sm" className="h-8 text-xs bg-red-600 hover:bg-red-500">
+                    <Link href={`/dashboard/revision/workspace/${s.id}`} className="w-full sm:w-auto">
+                      <Button size="sm" className="h-9 sm:h-8 text-xs bg-red-600 hover:bg-red-500 w-full sm:w-auto min-h-[36px]">
                         Start Now
                       </Button>
                     </Link>
@@ -359,14 +372,14 @@ export function RevisionHubClient({
                 {scheduledSessions.dueToday.map((s) => (
                   <div
                     key={s.id}
-                    className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 flex items-center justify-between"
+                    className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                   >
                     <div>
                       <p className="text-sm font-semibold text-white">{s.title}</p>
                       <p className="text-xs text-amber-400">Scheduled for today</p>
                     </div>
-                    <Link href={`/dashboard/revision/workspace/${s.id}`}>
-                      <Button size="sm" className="h-8 text-xs bg-amber-600 hover:bg-amber-500">
+                    <Link href={`/dashboard/revision/workspace/${s.id}`} className="w-full sm:w-auto">
+                      <Button size="sm" className="h-9 sm:h-8 text-xs bg-amber-600 hover:bg-amber-500 w-full sm:w-auto min-h-[36px]">
                         Start Now
                       </Button>
                     </Link>
@@ -388,7 +401,7 @@ export function RevisionHubClient({
                 {scheduledSessions.upcoming.map((s) => (
                   <div
                     key={s.id}
-                    className="p-3.5 rounded-xl border border-zinc-800 bg-[#11141D] flex items-center justify-between"
+                    className="p-3.5 rounded-xl border border-zinc-800 bg-[#11141D] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                   >
                     <div>
                       <p className="text-sm font-semibold text-white">{s.title}</p>
@@ -396,8 +409,8 @@ export function RevisionHubClient({
                         Scheduled for: {formatDate(s.scheduled_date)}
                       </p>
                     </div>
-                    <Link href={`/dashboard/revision/workspace/${s.id}`}>
-                      <Button variant="outline" size="sm" className="h-8 text-xs border-zinc-800">
+                    <Link href={`/dashboard/revision/workspace/${s.id}`} className="w-full sm:w-auto">
+                      <Button variant="outline" size="sm" className="h-9 sm:h-8 text-xs border-zinc-800 w-full sm:w-auto min-h-[36px]">
                         Open
                       </Button>
                     </Link>

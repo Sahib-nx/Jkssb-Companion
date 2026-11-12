@@ -85,7 +85,7 @@ export function WeakAreasView({
         <label className="text-xs font-medium text-zinc-300 block">
           What concept or topic in this lecture feels confusing or difficult?
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={query}
@@ -93,12 +93,12 @@ export function WeakAreasView({
             onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
             placeholder="e.g. How does the Vice President's casting vote work? or Rule of LCM..."
             disabled={isLoading}
-            className="flex-1 px-3.5 py-2.5 rounded-lg bg-black/40 border border-white/10 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50"
+            className="flex-1 px-3.5 py-2.5 rounded-lg bg-black/40 border border-white/10 text-base sm:text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50 min-h-[40px]"
           />
           <Button
             onClick={handleAsk}
             disabled={isLoading || !query.trim()}
-            className="text-xs bg-violet-600 hover:bg-violet-500 text-white font-medium shrink-0"
+            className="text-xs bg-violet-600 hover:bg-violet-500 text-white font-medium shrink-0 w-full sm:w-auto min-h-[40px]"
           >
             {isLoading ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />

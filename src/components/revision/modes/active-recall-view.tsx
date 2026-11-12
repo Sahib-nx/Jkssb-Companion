@@ -193,7 +193,7 @@ export function ActiveRecallView({
               disabled={isEvaluating || !!evaluation}
               placeholder="Explain the concept, facts, dates or definitions here..."
               rows={3}
-              className="w-full p-3 rounded-lg bg-black/40 border border-white/10 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 resize-y"
+              className="w-full p-3 rounded-lg bg-black/40 border border-white/10 text-base sm:text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 resize-y"
             />
           </div>
 
@@ -203,7 +203,7 @@ export function ActiveRecallView({
               <Button
                 onClick={handleSubmitAnswer}
                 disabled={isEvaluating || !userAnswer.trim()}
-                className="text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium"
+                className="text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium w-full sm:w-auto min-h-[40px]"
               >
                 {isEvaluating ? (
                   <>
@@ -290,9 +290,9 @@ export function ActiveRecallView({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <button
                     onClick={() => handleRatingClick('remembered')}
-                    className={`p-2.5 rounded-lg border text-xs font-medium flex items-center justify-center transition-all ${
+                    className={`p-2.5 rounded-lg border text-xs font-medium flex items-center justify-center transition-all min-h-[40px] ${
                       recordedRating === 'remembered'
-                        ? 'bg-emerald-600 text-white border-emerald-500'
+                        ? 'bg-emerald-600 text-white border-emerald-500 font-semibold'
                         : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300 hover:bg-emerald-500/20'
                     }`}
                   >
@@ -302,9 +302,9 @@ export function ActiveRecallView({
 
                   <button
                     onClick={() => handleRatingClick('partially')}
-                    className={`p-2.5 rounded-lg border text-xs font-medium flex items-center justify-center transition-all ${
+                    className={`p-2.5 rounded-lg border text-xs font-medium flex items-center justify-center transition-all min-h-[40px] ${
                       recordedRating === 'partially'
-                        ? 'bg-amber-600 text-white border-amber-500'
+                        ? 'bg-amber-600 text-white border-amber-500 font-semibold'
                         : 'bg-amber-500/10 border-amber-500/20 text-amber-300 hover:bg-amber-500/20'
                     }`}
                   >
@@ -314,9 +314,9 @@ export function ActiveRecallView({
 
                   <button
                     onClick={() => handleRatingClick('did_not_remember')}
-                    className={`p-2.5 rounded-lg border text-xs font-medium flex items-center justify-center transition-all ${
+                    className={`p-2.5 rounded-lg border text-xs font-medium flex items-center justify-center transition-all min-h-[40px] ${
                       recordedRating === 'did_not_remember'
-                        ? 'bg-rose-600 text-white border-rose-500'
+                        ? 'bg-rose-600 text-white border-rose-500 font-semibold'
                         : 'bg-rose-500/10 border-rose-500/20 text-rose-300 hover:bg-rose-500/20'
                     }`}
                   >
@@ -332,7 +332,7 @@ export function ActiveRecallView({
                   variant="outline"
                   size="sm"
                   onClick={() => handleGetNextQuestion()}
-                  className="text-xs border-white/10 text-zinc-300 hover:text-white"
+                  className="text-xs border-white/10 text-zinc-300 hover:text-white w-full sm:w-auto min-h-[38px]"
                 >
                   <span>Next Question</span>
                   <ArrowRight className="w-3.5 h-3.5 ml-1.5" />

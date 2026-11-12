@@ -145,11 +145,11 @@ export function LectureNoteClient({
   return (
     <div className="space-y-6">
       {/* Top Breadcrumb & Next/Prev Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800/80 pb-4">
-        <div className="flex items-center space-x-2 text-xs text-zinc-400">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800/80 pb-4">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-zinc-400">
           <Link
             href="/dashboard/lecture-notes"
-            className="hover:text-white flex items-center transition-colors"
+            className="hover:text-white flex items-center transition-colors shrink-0"
           >
             <ArrowLeft className="w-3.5 h-3.5 mr-1" />
             Lecture Notes
@@ -157,25 +157,25 @@ export function LectureNoteClient({
           <span>/</span>
           <Link
             href={`/dashboard/lecture-notes?subject=${subject.slug}`}
-            className="hover:text-white transition-colors"
+            className="hover:text-white transition-colors shrink-0"
           >
             {subject.name}
           </Link>
           <span>/</span>
-          <span className="text-zinc-200 font-medium">{lecture.title}</span>
+          <span className="text-zinc-200 font-medium truncate max-w-[140px] sm:max-w-none">{lecture.title}</span>
         </div>
 
         {/* Previous and Next Lecture Navigation */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end">
           {prevLecture ? (
-            <Link href={`/dashboard/lectures/${prevLecture.id}`}>
+            <Link href={`/dashboard/lectures/${prevLecture.id}`} className="flex-1 sm:flex-initial">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 text-xs border-zinc-800 hover:bg-zinc-800"
+                className="h-8.5 sm:h-8 text-xs border-zinc-800 hover:bg-zinc-800 w-full sm:w-auto max-w-[150px] sm:max-w-[200px]"
               >
-                <ChevronLeft className="w-3.5 h-3.5 mr-1" />
-                <span>{prevLecture.title}</span>
+                <ChevronLeft className="w-3.5 h-3.5 mr-1 shrink-0" />
+                <span className="truncate">{prevLecture.title}</span>
               </Button>
             </Link>
           ) : (
@@ -183,22 +183,22 @@ export function LectureNoteClient({
               variant="outline"
               size="sm"
               disabled
-              className="h-8 text-xs opacity-40 border-zinc-800"
+              className="h-8.5 sm:h-8 text-xs opacity-40 border-zinc-800 flex-1 sm:flex-initial max-w-[150px] sm:max-w-[200px]"
             >
-              <ChevronLeft className="w-3.5 h-3.5 mr-1" />
+              <ChevronLeft className="w-3.5 h-3.5 mr-1 shrink-0" />
               <span>Start</span>
             </Button>
           )}
 
           {nextLecture ? (
-            <Link href={`/dashboard/lectures/${nextLecture.id}`}>
+            <Link href={`/dashboard/lectures/${nextLecture.id}`} className="flex-1 sm:flex-initial">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 text-xs border-zinc-800 hover:bg-zinc-800"
+                className="h-8.5 sm:h-8 text-xs border-zinc-800 hover:bg-zinc-800 w-full sm:w-auto max-w-[150px] sm:max-w-[200px]"
               >
-                <span>{nextLecture.title}</span>
-                <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                <span className="truncate">{nextLecture.title}</span>
+                <ChevronRight className="w-3.5 h-3.5 ml-1 shrink-0" />
               </Button>
             </Link>
           ) : (
@@ -206,19 +206,19 @@ export function LectureNoteClient({
               variant="outline"
               size="sm"
               disabled
-              className="h-8 text-xs opacity-40 border-zinc-800"
+              className="h-8.5 sm:h-8 text-xs opacity-40 border-zinc-800 flex-1 sm:flex-initial max-w-[150px] sm:max-w-[200px]"
             >
               <span>End</span>
-              <ChevronRight className="w-3.5 h-3.5 ml-1" />
+              <ChevronRight className="w-3.5 h-3.5 ml-1 shrink-0" />
             </Button>
           )}
         </div>
       </div>
 
       {/* Lecture Title, Subject, and Progress Status Banner */}
-      <div className="p-5 rounded-xl border border-zinc-800/80 bg-[#11141D] flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-xl border border-zinc-800/80 bg-[#11141D] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2.5 mb-1.5">
+          <div className="flex items-center space-x-2.5 mb-1.5 flex-wrap gap-y-1">
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium">
               {subject.name} &bull; Lecture #{lecture.lecture_number}
             </span>
@@ -246,13 +246,13 @@ export function LectureNoteClient({
         </div>
 
         {/* Progress Action Controls */}
-        <div className="flex items-center space-x-2 shrink-0">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto pt-2.5 md:pt-0 border-t border-zinc-800/40 md:border-0 shrink-0">
           {status === 'not_started' && (
             <>
               <Button
                 variant="secondary"
                 size="sm"
-                className="h-8 text-xs text-amber-300 hover:text-amber-200"
+                className="h-9 sm:h-8 text-xs text-amber-300 hover:text-amber-200 flex-1 sm:flex-initial min-h-[36px]"
                 disabled={isUpdatingStatus || !!pendingStatusAction}
                 onClick={() => handleStatusChange('in_progress')}
               >
@@ -266,7 +266,7 @@ export function LectureNoteClient({
               <Button
                 variant="default"
                 size="sm"
-                className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500"
+                className="h-9 sm:h-8 text-xs bg-emerald-600 hover:bg-emerald-500 flex-1 sm:flex-initial min-h-[36px]"
                 disabled={isUpdatingStatus || !!pendingStatusAction}
                 onClick={() => handleStatusChange('completed')}
               >
@@ -285,7 +285,7 @@ export function LectureNoteClient({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 text-xs text-zinc-400 hover:text-zinc-200"
+                className="h-9 sm:h-8 text-xs text-zinc-400 hover:text-zinc-200 flex-1 sm:flex-initial min-h-[36px]"
                 disabled={isUpdatingStatus || !!pendingStatusAction}
                 onClick={() => handleStatusChange('not_started')}
               >
@@ -299,7 +299,7 @@ export function LectureNoteClient({
               <Button
                 variant="default"
                 size="sm"
-                className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500"
+                className="h-9 sm:h-8 text-xs bg-emerald-600 hover:bg-emerald-500 flex-1 sm:flex-initial min-h-[36px]"
                 disabled={isUpdatingStatus || !!pendingStatusAction}
                 onClick={() => handleStatusChange('completed')}
               >
@@ -318,7 +318,7 @@ export function LectureNoteClient({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 text-xs text-zinc-400 hover:text-amber-400 hover:border-amber-500/30"
+                className="h-9 sm:h-8 text-xs text-zinc-400 hover:text-amber-400 hover:border-amber-500/30 flex-1 sm:flex-initial min-h-[36px]"
                 disabled={isUpdatingStatus || !!pendingStatusAction}
                 onClick={() => handleStatusChange('in_progress')}
               >
@@ -332,7 +332,7 @@ export function LectureNoteClient({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 text-xs text-zinc-400 hover:text-red-400 hover:border-red-500/30"
+                className="h-9 sm:h-8 text-xs text-zinc-400 hover:text-red-400 hover:border-red-500/30 flex-1 sm:flex-initial min-h-[36px]"
                 disabled={isUpdatingStatus || !!pendingStatusAction}
                 onClick={() => handleStatusChange('not_started')}
               >

@@ -21,7 +21,16 @@ export default async function LectureNotesPage({ searchParams }: LectureNotesPag
     )
   }
 
-  const { subjects, activeSubject, lectures, notesCount, totalLectures } = data
+  const {
+    subjects,
+    activeSubject,
+    lectures,
+    notesCount,
+    totalLectures,
+    allLecturesBySubject,
+    notesCountBySubject,
+    initialSubjectSlug,
+  } = data
 
   return (
     <div className="space-y-6">
@@ -40,6 +49,9 @@ export default async function LectureNotesPage({ searchParams }: LectureNotesPag
         lectures={lectures}
         notesCount={notesCount}
         totalLectures={totalLectures}
+        allLecturesBySubject={allLecturesBySubject}
+        notesCountBySubject={notesCountBySubject}
+        initialSubjectSlug={initialSubjectSlug}
       />
     </div>
   )

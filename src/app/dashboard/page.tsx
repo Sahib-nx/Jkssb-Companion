@@ -87,17 +87,17 @@ export default async function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center space-x-2.5">
-            <Link href="/dashboard/tracker">
-              <Button className="bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30 text-white text-xs font-semibold">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
+            <Link href="/dashboard/tracker" className="flex-1 sm:flex-initial">
+              <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30 text-white text-xs font-semibold min-h-[40px]">
                 <span>Lecture Tracker</span>
                 <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
             </Link>
-            <Link href="/dashboard/analytics">
+            <Link href="/dashboard/analytics" className="flex-1 sm:flex-initial">
               <Button
                 variant="outline"
-                className="border-white/20 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-200 text-xs"
+                className="w-full sm:w-auto border-white/20 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-200 text-xs min-h-[40px]"
               >
                 <BarChart3 className="w-3.5 h-3.5 mr-1.5 text-blue-400" />
                 <span>Analytics</span>
@@ -107,74 +107,74 @@ export default async function DashboardPage() {
         </div>
 
         {/* Top 4 KPI Metric Cards (Translucent with subtle glass border) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card className="border-white/10 bg-[#0B0D12]/55 backdrop-blur-md shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
+              <CardTitle className="text-[11px] sm:text-xs font-medium text-zinc-400 uppercase tracking-wider">
                 Total Lectures
               </CardTitle>
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                <BookOpen className="w-4 h-4" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-extrabold text-white">
+              <div className="text-2xl sm:text-3xl font-extrabold text-white">
                 {overallStats.total_lectures}
               </div>
-              <p className="text-xs text-zinc-400 mt-1">Full course curriculum</p>
+              <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5 sm:mt-1 truncate">Full curriculum</p>
             </CardContent>
           </Card>
 
           <Card className="border-white/10 bg-[#0B0D12]/55 backdrop-blur-md shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium text-emerald-400 uppercase tracking-wider">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
+              <CardTitle className="text-[11px] sm:text-xs font-medium text-emerald-400 uppercase tracking-wider">
                 Completed
               </CardTitle>
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                <CheckCircle2 className="w-4 h-4" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-extrabold text-emerald-400">
+              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400">
                 {overallStats.completed_count}
               </div>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5 sm:mt-1 truncate">
                 {overallStats.progress_percentage}% completed
               </p>
             </CardContent>
           </Card>
 
           <Card className="border-white/10 bg-[#0B0D12]/55 backdrop-blur-md shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium text-amber-400 uppercase tracking-wider">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
+              <CardTitle className="text-[11px] sm:text-xs font-medium text-amber-400 uppercase tracking-wider">
                 In Progress
               </CardTitle>
-              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                <Clock className="w-4 h-4" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-extrabold text-amber-400">
+              <div className="text-2xl sm:text-3xl font-extrabold text-amber-400">
                 {overallStats.in_progress_count}
               </div>
-              <p className="text-xs text-zinc-400 mt-1">Currently watching</p>
+              <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5 sm:mt-1 truncate">Watching now</p>
             </CardContent>
           </Card>
 
           <Card className="border-white/10 bg-[#0B0D12]/55 backdrop-blur-md shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
+              <CardTitle className="text-[11px] sm:text-xs font-medium text-zinc-400 uppercase tracking-wider">
                 Remaining
               </CardTitle>
-              <div className="w-8 h-8 rounded-lg bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center text-zinc-400">
-                <CircleDashed className="w-4 h-4" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center text-zinc-400 shrink-0">
+                <CircleDashed className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-extrabold text-zinc-200">
+              <div className="text-2xl sm:text-3xl font-extrabold text-zinc-200">
                 {overallStats.remaining_count}
               </div>
-              <p className="text-xs text-zinc-400 mt-1">Lectures left to finish</p>
+              <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5 sm:mt-1 truncate">Lectures left</p>
             </CardContent>
           </Card>
         </div>
@@ -208,16 +208,16 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Quick Action Navigation Buttons */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
           <Link href="/dashboard/tracker">
             <Button
               variant="outline"
-              className="w-full h-12 border-white/10 bg-[#0B0D12]/55 hover:bg-zinc-800/80 justify-start text-xs text-zinc-200"
+              className="w-full min-h-[52px] h-auto py-2.5 px-3 border-white/10 bg-[#0B0D12]/55 hover:bg-zinc-800/80 justify-start text-xs text-zinc-200"
             >
               <BookOpen className="w-4 h-4 mr-2 text-blue-400 shrink-0" />
-              <div className="text-left">
-                <div className="font-semibold text-white">Lecture Tracker</div>
-                <div className="text-[10px] text-zinc-400">Track 255 lectures</div>
+              <div className="text-left min-w-0">
+                <div className="font-semibold text-white truncate">Lecture Tracker</div>
+                <div className="text-[10px] text-zinc-400 truncate">Track 255 lectures</div>
               </div>
             </Button>
           </Link>
@@ -225,12 +225,12 @@ export default async function DashboardPage() {
           <Link href="/dashboard/lecture-notes">
             <Button
               variant="outline"
-              className="w-full h-12 border-white/10 bg-[#0B0D12]/55 hover:bg-zinc-800/80 justify-start text-xs text-zinc-200"
+              className="w-full min-h-[52px] h-auto py-2.5 px-3 border-white/10 bg-[#0B0D12]/55 hover:bg-zinc-800/80 justify-start text-xs text-zinc-200"
             >
               <FileText className="w-4 h-4 mr-2 text-emerald-400 shrink-0" />
-              <div className="text-left">
-                <div className="font-semibold text-white">Lecture Notes</div>
-                <div className="text-[10px] text-zinc-400">Read & write notes</div>
+              <div className="text-left min-w-0">
+                <div className="font-semibold text-white truncate">Lecture Notes</div>
+                <div className="text-[10px] text-zinc-400 truncate">Read & write notes</div>
               </div>
             </Button>
           </Link>
@@ -238,12 +238,12 @@ export default async function DashboardPage() {
           <Link href="/dashboard/general-notes">
             <Button
               variant="outline"
-              className="w-full h-12 border-white/10 bg-[#0B0D12]/55 hover:bg-zinc-800/80 justify-start text-xs text-zinc-200"
+              className="w-full min-h-[52px] h-auto py-2.5 px-3 border-white/10 bg-[#0B0D12]/55 hover:bg-zinc-800/80 justify-start text-xs text-zinc-200"
             >
               <Sparkles className="w-4 h-4 mr-2 text-purple-400 shrink-0" />
-              <div className="text-left">
-                <div className="font-semibold text-white">General Notes</div>
-                <div className="text-[10px] text-zinc-400">Facts & overviews</div>
+              <div className="text-left min-w-0">
+                <div className="font-semibold text-white truncate">General Notes</div>
+                <div className="text-[10px] text-zinc-400 truncate">Facts & overviews</div>
               </div>
             </Button>
           </Link>
@@ -251,25 +251,25 @@ export default async function DashboardPage() {
           <Link href="/dashboard/revision">
             <Button
               variant="outline"
-              className="w-full h-12 border-white/10 bg-[#0B0D12]/55 hover:bg-zinc-800/80 justify-start text-xs text-zinc-200"
+              className="w-full min-h-[52px] h-auto py-2.5 px-3 border-white/10 bg-[#0B0D12]/55 hover:bg-zinc-800/80 justify-start text-xs text-zinc-200"
             >
               <RotateCcw className="w-4 h-4 mr-2 text-amber-400 shrink-0" />
-              <div className="text-left">
-                <div className="font-semibold text-white">Revision Centre</div>
-                <div className="text-[10px] text-zinc-400">5 revision modes</div>
+              <div className="text-left min-w-0">
+                <div className="font-semibold text-white truncate">Revision Centre</div>
+                <div className="text-[10px] text-zinc-400 truncate">5 revision modes</div>
               </div>
             </Button>
           </Link>
 
-          <Link href="/dashboard/planner">
+          <Link href="/dashboard/planner" className="col-span-2 sm:col-span-1">
             <Button
               variant="outline"
-              className="w-full h-12 border-white/10 bg-[#0B0D12]/55 hover:bg-zinc-800/80 justify-start text-xs text-zinc-200"
+              className="w-full min-h-[52px] h-auto py-2.5 px-3 border-white/10 bg-[#0B0D12]/55 hover:bg-zinc-800/80 justify-start text-xs text-zinc-200"
             >
               <CalendarDays className="w-4 h-4 mr-2 text-blue-400 shrink-0" />
-              <div className="text-left">
-                <div className="font-semibold text-white">Daily Planner</div>
-                <div className="text-[10px] text-zinc-400">Day-wise tasks</div>
+              <div className="text-left min-w-0">
+                <div className="font-semibold text-white truncate">Daily Planner</div>
+                <div className="text-[10px] text-zinc-400 truncate">Day-wise tasks</div>
               </div>
             </Button>
           </Link>
@@ -358,22 +358,22 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {/* Alert Pills */}
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                <div className="p-2.5 rounded-lg bg-[#0B0D12]/60 border border-zinc-800/60">
-                  <span className="text-[11px] text-zinc-400 block mb-0.5">Due Today</span>
-                  <span className="text-lg font-bold text-amber-400">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-center text-xs">
+                <div className="p-2 sm:p-2.5 rounded-lg bg-[#0B0D12]/60 border border-zinc-800/60">
+                  <span className="text-[10px] sm:text-[11px] text-zinc-400 block mb-0.5 truncate">Due Today</span>
+                  <span className="text-base sm:text-lg font-bold text-amber-400">
                     {revisions.dueTodayCount}
                   </span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-[#0B0D12]/60 border border-zinc-800/60">
-                  <span className="text-[11px] text-zinc-400 block mb-0.5">Overdue</span>
-                  <span className="text-lg font-bold text-red-400">
+                <div className="p-2 sm:p-2.5 rounded-lg bg-[#0B0D12]/60 border border-zinc-800/60">
+                  <span className="text-[10px] sm:text-[11px] text-zinc-400 block mb-0.5 truncate">Overdue</span>
+                  <span className="text-base sm:text-lg font-bold text-red-400">
                     {revisions.overdueCount}
                   </span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-[#0B0D12]/60 border border-zinc-800/60">
-                  <span className="text-[11px] text-zinc-400 block mb-0.5">Upcoming</span>
-                  <span className="text-lg font-bold text-blue-400">
+                <div className="p-2 sm:p-2.5 rounded-lg bg-[#0B0D12]/60 border border-zinc-800/60">
+                  <span className="text-[10px] sm:text-[11px] text-zinc-400 block mb-0.5 truncate">Upcoming</span>
+                  <span className="text-base sm:text-lg font-bold text-blue-400">
                     {revisions.upcomingCount}
                   </span>
                 </div>
@@ -457,24 +457,24 @@ export default async function DashboardPage() {
                     }
                   />
 
-                  <div className="grid grid-cols-3 gap-2 text-center pt-1 text-xs">
+                  <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-center pt-1 text-xs">
                     <div className="p-2 rounded-lg bg-[#0B0D12]/70 border border-zinc-800/80">
-                      <p className="text-emerald-400 font-semibold text-sm">
+                      <p className="text-emerald-400 font-semibold text-xs sm:text-sm">
                         {subject.completed_count}
                       </p>
-                      <p className="text-[11px] text-zinc-400 mt-0.5">Completed</p>
+                      <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 truncate">Completed</p>
                     </div>
                     <div className="p-2 rounded-lg bg-[#0B0D12]/70 border border-zinc-800/80">
-                      <p className="text-amber-400 font-semibold text-sm">
+                      <p className="text-amber-400 font-semibold text-xs sm:text-sm">
                         {subject.in_progress_count}
                       </p>
-                      <p className="text-[11px] text-zinc-400 mt-0.5">In Progress</p>
+                      <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 truncate">In Progress</p>
                     </div>
                     <div className="p-2 rounded-lg bg-[#0B0D12]/70 border border-zinc-800/80">
-                      <p className="text-zinc-300 font-semibold text-sm">
+                      <p className="text-zinc-300 font-semibold text-xs sm:text-sm">
                         {subject.remaining_count}
                       </p>
-                      <p className="text-[11px] text-zinc-400 mt-0.5">Remaining</p>
+                      <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 truncate">Remaining</p>
                     </div>
                   </div>
 
@@ -483,7 +483,7 @@ export default async function DashboardPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="w-full text-xs border-zinc-700/80 justify-center"
+                        className="w-full text-xs min-h-[38px] border-zinc-700/80 justify-center"
                       >
                         Tracker
                       </Button>
@@ -492,7 +492,7 @@ export default async function DashboardPage() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        className="w-full text-xs justify-center"
+                        className="w-full text-xs min-h-[38px] justify-center"
                       >
                         Notes
                       </Button>

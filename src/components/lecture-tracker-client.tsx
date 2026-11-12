@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useMemo } from 'react'
 import Link from 'next/link'
 import {
   Subject,
@@ -29,28 +29,92 @@ import {
 import { useToast } from '@/components/ui/toast'
 
 interface LectureTrackerClientProps {
-  subjects: Subject[]
-  activeSubject: SubjectWithStats
-  lectures: LectureWithProgress[]
+  subjects: SubjectWithStats[]
+  allLecturesBySubject?: Record<string, LectureWithProgress[]>
   overallPercentage: number
+  initialSubjectSlug?: string
+  activeSubject?: SubjectWithStats
+  lectures?: LectureWithProgress[]
 }
 
 export function LectureTrackerClient({
   subjects,
-  activeSubject,
-  lectures,
+  allLecturesBySubject,
   overallPercentage,
+  initialSubjectSlug,
+  activeSubject: fallbackActiveSubject,
+  lectures: fallbackLectures,
 }: LectureTrackerClientProps) {
   const toast = useToast()
+  const [activeSubjectSlug, setActiveSubjectSlug] = useState<string>(
+    initialSubjectSlug || fallbackActiveSubject?.slug || subjects[0]?.slug || 'general-knowledge'
+  )
+  const [lecturesMap, setLecturesMap] = useState<Record<string, LectureWithProgress[]>>(
+    allLecturesBySubject || (fallbackActiveSubject && fallbackLectures ? { [fallbackActiveSubject.slug]: fallbackLectures } : {})
+  )
   const [filter, setFilter] = useState<'all' | 'not_started' | 'in_progress' | 'completed'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [pendingLectureId, setPendingLectureId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  // Handle status update
+  // Instant subject switch with zero network delay & URL synchronization
+  const handleSubjectChange = (slug: string) => {
+    if (slug === activeSubjectSlug) return
+    setActiveSubjectSlug(slug)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.set('subject', slug)
+      window.history.replaceState(null, '', url.toString())
+    }
+  }
+
+  const currentLectures = lecturesMap[activeSubjectSlug] || []
+  const baseActiveSubject = subjects.find((s) => s.slug === activeSubjectSlug) || subjects[0]
+  const completedCount = currentLectures.filter((l) => l.progress?.status === 'completed').length
+  const inProgressCount = currentLectures.filter((l) => l.progress?.status === 'in_progress').length
+  const total = baseActiveSubject.total_lectures
+  const remainingCount = Math.max(0, total - completedCount)
+  const subjectPercentage = total > 0 ? Math.round((completedCount / total) * 100) : 0
+
+  const activeSubject: SubjectWithStats = {
+    ...baseActiveSubject,
+    completed_count: completedCount,
+    in_progress_count: inProgressCount,
+    remaining_count: remainingCount,
+    progress_percentage: subjectPercentage,
+  }
+
+  // Handle status update with optimistic UI & rollback on error
   const handleStatusChange = (lectureId: string, targetStatus: TargetStatus) => {
     if (pendingLectureId) return
     setPendingLectureId(lectureId)
+
+    const prevMap = lecturesMap
+    setLecturesMap((prev) => {
+      const list = prev[activeSubjectSlug] || []
+      const updated = list.map((lec) => {
+        if (lec.id === lectureId) {
+          const newStatus = targetStatus === 'not_started' ? null : targetStatus
+          return {
+            ...lec,
+            progress: newStatus
+              ? {
+                  id: lec.progress?.id || 'temp-' + Date.now(),
+                  user_id: lec.progress?.user_id || '',
+                  lecture_id: lectureId,
+                  status: newStatus as any,
+                  started_at: lec.progress?.started_at || new Date().toISOString(),
+                  completed_at: targetStatus === 'completed' ? new Date().toISOString() : null,
+                  updated_at: new Date().toISOString(),
+                }
+              : null,
+          }
+        }
+        return lec
+      })
+      return { ...prev, [activeSubjectSlug]: updated }
+    })
+
     startTransition(async () => {
       try {
         const res = await updateLectureProgress(lectureId, targetStatus)
@@ -63,9 +127,11 @@ export function LectureTrackerClient({
             toast.info('Lecture reset to not started')
           }
         } else {
+          setLecturesMap(prevMap)
           toast.error(res.error || 'Failed to update lecture status')
         }
       } catch (err: any) {
+        setLecturesMap(prevMap)
         toast.error(err?.message || 'Failed to update lecture status')
       } finally {
         setPendingLectureId(null)
@@ -74,22 +140,24 @@ export function LectureTrackerClient({
   }
 
   // Filter lectures based on status and search query
-  const filteredLectures = lectures.filter((lec) => {
-    const status = lec.progress?.status || 'not_started'
+  const filteredLectures = useMemo(() => {
+    return currentLectures.filter((lec) => {
+      const status = lec.progress?.status || 'not_started'
 
-    if (filter === 'not_started' && status !== 'not_started') return false
-    if (filter === 'in_progress' && status !== 'in_progress') return false
-    if (filter === 'completed' && status !== 'completed') return false
+      if (filter === 'not_started' && status !== 'not_started') return false
+      if (filter === 'in_progress' && status !== 'in_progress') return false
+      if (filter === 'completed' && status !== 'completed') return false
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim()
-      const titleMatch = lec.title.toLowerCase().includes(q)
-      const numMatch = lec.lecture_number.toString().includes(q)
-      return titleMatch || numMatch
-    }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim()
+        const titleMatch = lec.title.toLowerCase().includes(q)
+        const numMatch = lec.lecture_number.toString().includes(q)
+        return titleMatch || numMatch
+      }
 
-    return true
-  })
+      return true
+    })
+  }, [currentLectures, filter, searchQuery])
 
   // Format date helper
   const formatDate = (dateStr?: string | null) => {
@@ -108,29 +176,30 @@ export function LectureTrackerClient({
 
   return (
     <div className="space-y-6">
-      {/* Subject Navigation Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-zinc-800/80 pb-3">
+      {/* Subject Navigation Tabs with Instant Switching */}
+      <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-3 border-b border-zinc-800/80 -mx-1 px-1 sm:mx-0 sm:px-0">
         {subjects.map((sub) => {
-          const isActive = sub.slug === activeSubject.slug
+          const isActive = sub.slug === activeSubjectSlug
           return (
-            <Link
+            <button
               key={sub.id}
-              href={`/dashboard/tracker?subject=${sub.slug}`}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 ${
+              type="button"
+              onClick={() => handleSubjectChange(sub.slug)}
+              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-150 flex items-center space-x-2 shrink-0 min-h-[40px] cursor-pointer ${
                 isActive
-                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30 font-semibold'
-                  : 'bg-[#11141D] text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30 font-semibold ring-1 ring-blue-400/40'
+                  : 'bg-[#11141D] text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 active:scale-[0.98]'
               }`}
             >
               <span>{sub.name}</span>
               <span
-                className={`text-xs px-2 py-0.5 rounded-full ${
+                className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium ${
                   isActive ? 'bg-blue-700 text-blue-100' : 'bg-zinc-800 text-zinc-400'
                 }`}
               >
                 {sub.total_lectures}
               </span>
-            </Link>
+            </button>
           )
         })}
       </div>
@@ -198,22 +267,22 @@ export function LectureTrackerClient({
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        <div className="flex flex-wrap gap-1.5 p-1 rounded-lg bg-[#11141D] border border-zinc-800">
+        <div className="flex items-center space-x-1.5 p-1 rounded-lg bg-[#11141D] border border-zinc-800 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setFilter('all')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
               filter === 'all'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-blue-600 text-white font-semibold'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            All ({lectures.length})
+            All ({currentLectures.length})
           </button>
           <button
             onClick={() => setFilter('not_started')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
               filter === 'not_started'
-                ? 'bg-zinc-700 text-white'
+                ? 'bg-zinc-700 text-white font-semibold'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -221,9 +290,9 @@ export function LectureTrackerClient({
           </button>
           <button
             onClick={() => setFilter('in_progress')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
               filter === 'in_progress'
-                ? 'bg-amber-600 text-white'
+                ? 'bg-amber-600 text-white font-semibold'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -231,9 +300,9 @@ export function LectureTrackerClient({
           </button>
           <button
             onClick={() => setFilter('completed')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
               filter === 'completed'
-                ? 'bg-emerald-600 text-white'
+                ? 'bg-emerald-600 text-white font-semibold'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -324,12 +393,12 @@ export function LectureTrackerClient({
                 </div>
 
                 {/* Right side: Action Controls */}
-                <div className="flex items-center space-x-2 shrink-0">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 pt-2.5 sm:pt-0 border-t border-zinc-800/40 sm:border-0 justify-end sm:justify-start shrink-0 w-full sm:w-auto">
                   <Link href={`/dashboard/lectures/${lecture.id}`}>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                      className="h-8 min-h-[36px] text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 px-2.5"
                       title="Open Dedicated Notes"
                     >
                       <BookText className="w-3.5 h-3.5 mr-1" />
@@ -338,7 +407,7 @@ export function LectureTrackerClient({
                   </Link>
 
                   {isRowPending ? (
-                    <Button variant="outline" size="sm" disabled className="h-8 text-xs">
+                    <Button variant="outline" size="sm" disabled className="h-8 min-h-[36px] text-xs">
                       <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                       Updating...
                     </Button>
@@ -350,7 +419,7 @@ export function LectureTrackerClient({
                           <Button
                             variant="secondary"
                             size="sm"
-                            className="h-8 text-xs text-amber-300 hover:text-amber-200"
+                            className="h-8 min-h-[36px] text-xs text-amber-300 hover:text-amber-200"
                             onClick={() => handleStatusChange(lecture.id, 'in_progress')}
                           >
                             <Play className="w-3 h-3 mr-1.5" />
@@ -359,7 +428,7 @@ export function LectureTrackerClient({
                           <Button
                             variant="default"
                             size="sm"
-                            className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500"
+                            className="h-8 min-h-[36px] text-xs bg-emerald-600 hover:bg-emerald-500"
                             onClick={() => handleStatusChange(lecture.id, 'completed')}
                           >
                             <Check className="w-3.5 h-3.5 mr-1" />
@@ -374,7 +443,7 @@ export function LectureTrackerClient({
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 text-xs text-zinc-400 hover:text-zinc-200"
+                            className="h-8 min-h-[36px] text-xs text-zinc-400 hover:text-zinc-200"
                             onClick={() => handleStatusChange(lecture.id, 'not_started')}
                             title="Reset to Not Started"
                           >
@@ -384,7 +453,7 @@ export function LectureTrackerClient({
                           <Button
                             variant="default"
                             size="sm"
-                            className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500"
+                            className="h-8 min-h-[36px] text-xs bg-emerald-600 hover:bg-emerald-500"
                             onClick={() => handleStatusChange(lecture.id, 'completed')}
                           >
                             <Check className="w-3.5 h-3.5 mr-1" />
@@ -399,7 +468,7 @@ export function LectureTrackerClient({
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 text-xs text-zinc-400 hover:text-amber-400 hover:border-amber-500/30"
+                            className="h-8 min-h-[36px] text-xs text-zinc-400 hover:text-amber-400 hover:border-amber-500/30"
                             onClick={() => handleStatusChange(lecture.id, 'in_progress')}
                             title="Reopen to In Progress (preserves started_at)"
                           >
@@ -409,7 +478,7 @@ export function LectureTrackerClient({
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 text-xs text-zinc-400 hover:text-red-400 hover:border-red-500/30"
+                            className="h-8 min-h-[36px] text-xs text-zinc-400 hover:text-red-400 hover:border-red-500/30"
                             onClick={() => handleStatusChange(lecture.id, 'not_started')}
                             title="Reset to Not Started"
                           >

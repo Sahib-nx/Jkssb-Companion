@@ -140,23 +140,23 @@ export function NotesAssistantDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-4xl bg-[#11141D] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden text-zinc-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-4xl bg-[#11141D] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden text-zinc-100">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0 bg-white/[0.02]">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/10 shrink-0 bg-white/[0.02]">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+            <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-white">AI Notes Assistant</h3>
-              <p className="text-xs text-zinc-400">
+              <h3 className="text-sm sm:text-base font-semibold text-white">AI Notes Assistant</h3>
+              <p className="text-[11px] sm:text-xs text-zinc-400">
                 {hasSelection ? (
                   <span className="text-purple-300 font-medium">
-                    Operating on highlighted selection ({selectedText?.length} chars)
+                    Selection ({selectedText?.length} chars)
                   </span>
                 ) : (
-                  <span>Operating on entire note document</span>
+                  <span>Entire note document</span>
                 )}
               </p>
             </div>
@@ -170,7 +170,7 @@ export function NotesAssistantDialog({
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-6">
           {/* STATE 1: Operation Selection */}
           {!previewContent && !isLoading && (
             <div>
@@ -298,14 +298,14 @@ export function NotesAssistantDialog({
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 border-t border-white/10 bg-white/[0.02] flex items-center justify-between shrink-0">
+        <div className="p-3.5 sm:px-6 sm:py-4 border-t border-white/10 bg-white/[0.02] shrink-0">
           {previewContent ? (
-            <>
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleReset}
-                className="text-xs border-white/10 text-zinc-400 hover:text-white"
+                className="text-xs border-white/10 text-zinc-400 hover:text-white h-9 sm:h-8"
               >
                 <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                 Try Another Action
@@ -315,30 +315,30 @@ export function NotesAssistantDialog({
                   variant="outline"
                   size="sm"
                   onClick={handleDiscard}
-                  className="text-xs border-white/10 text-zinc-400 hover:text-white"
+                  className="text-xs border-white/10 text-zinc-400 hover:text-white flex-1 sm:flex-initial h-9 sm:h-8"
                 >
                   Discard
                 </Button>
                 <Button
                   size="sm"
                   onClick={handleApply}
-                  className="text-xs bg-purple-600 hover:bg-purple-500 text-white font-medium"
+                  className="text-xs bg-purple-600 hover:bg-purple-500 text-white font-medium flex-1 sm:flex-initial h-9 sm:h-8"
                 >
                   <Check className="w-3.5 h-3.5 mr-1.5" />
                   Apply Changes
                 </Button>
               </div>
-            </>
+            </div>
           ) : (
-            <div className="w-full flex items-center justify-between">
-              <span className="text-[11px] text-zinc-500">
+            <div className="w-full flex items-center justify-between gap-2">
+              <span className="text-[11px] text-zinc-500 truncate mr-2">
                 AI modifications never overwrite notes silently.
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleDiscard}
-                className="text-xs border-white/10 text-zinc-400 hover:text-white"
+                className="text-xs border-white/10 text-zinc-400 hover:text-white h-8 shrink-0"
               >
                 Close
               </Button>

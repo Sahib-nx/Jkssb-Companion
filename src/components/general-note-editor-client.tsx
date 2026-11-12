@@ -89,27 +89,29 @@ export function GeneralNoteEditorClient({
         </Link>
 
         {/* Category / Subject Selector */}
-        <div className="flex items-center space-x-2">
-          <Folder className="w-4 h-4 text-blue-400 shrink-0" />
-          <select
-            value={subjectId || ''}
-            onChange={(e) => setSubjectId(e.target.value || null)}
-            className="h-8 rounded-lg border border-zinc-700/80 bg-zinc-900/80 px-2.5 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">Uncategorized (No Subject)</option>
-            {subjects.map((sub) => (
-              <option key={sub.id} value={sub.id}>
-                {sub.name}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center space-x-2 flex-1 sm:flex-initial min-w-0">
+            <Folder className="w-4 h-4 text-blue-400 shrink-0" />
+            <select
+              value={subjectId || ''}
+              onChange={(e) => setSubjectId(e.target.value || null)}
+              className="h-9 sm:h-8 rounded-lg border border-zinc-700/80 bg-zinc-900/80 px-2.5 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-blue-500 w-full sm:w-auto min-w-[180px]"
+            >
+              <option value="">Uncategorized (No Subject)</option>
+              {subjects.map((sub) => (
+                <option key={sub.id} value={sub.id}>
+                  {sub.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <Button
             variant="outline"
             size="sm"
             onClick={handleDelete}
             disabled={isDeleting}
-            className="h-8 text-xs text-zinc-400 hover:text-red-400 hover:border-red-500/30"
+            className="h-9 sm:h-8 text-xs text-zinc-400 hover:text-red-400 hover:border-red-500/30 min-h-[36px] shrink-0"
             title="Delete this note"
           >
             {isDeleting ? (

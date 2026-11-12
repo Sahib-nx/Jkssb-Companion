@@ -33,8 +33,17 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { Json } from '@/types/database'
-import { AiConsentModal } from '@/components/ai/ai-consent-modal'
-import { NotesAssistantDialog } from '@/components/ai/notes-assistant-dialog'
+import dynamic from 'next/dynamic'
+
+const AiConsentModal = dynamic(
+  () => import('@/components/ai/ai-consent-modal').then((mod) => mod.AiConsentModal),
+  { ssr: false }
+)
+
+const NotesAssistantDialog = dynamic(
+  () => import('@/components/ai/notes-assistant-dialog').then((mod) => mod.NotesAssistantDialog),
+  { ssr: false }
+)
 
 type SaveStatus = 'saved' | 'saving' | 'unsaved' | 'error'
 
@@ -248,14 +257,14 @@ export function RichTextEditor({
       className={`rounded-xl border border-zinc-800/80 bg-[#11141D] flex flex-col overflow-hidden shadow-sm ${className}`}
     >
       {/* Editor Header & Toolbar */}
-      <div className="border-b border-zinc-800/80 bg-[#0E1118] p-2 sm:p-2.5 flex flex-wrap items-center justify-between gap-2">
-        {/* Formatting Actions */}
-        <div className="flex flex-wrap items-center gap-1">
+      <div className="border-b border-zinc-800/80 bg-[#0E1118] p-2 sm:p-2.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+        {/* Formatting Actions - Scrollable on mobile, flex on desktop */}
+        <div className="flex items-center overflow-x-auto no-scrollbar gap-1 py-0.5 w-full sm:w-auto shrink min-w-0">
           {/* Headings */}
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-            className={`p-1.5 rounded text-xs font-semibold ${
+            className={`p-1.5 rounded text-xs font-semibold shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center ${
               editor.isActive('heading', { level: 1 })
                 ? 'bg-blue-600 text-white'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -267,7 +276,7 @@ export function RichTextEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            className={`p-1.5 rounded text-xs font-semibold ${
+            className={`p-1.5 rounded text-xs font-semibold shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center ${
               editor.isActive('heading', { level: 2 })
                 ? 'bg-blue-600 text-white'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -279,7 +288,7 @@ export function RichTextEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            className={`p-1.5 rounded text-xs font-semibold ${
+            className={`p-1.5 rounded text-xs font-semibold shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center ${
               editor.isActive('heading', { level: 3 })
                 ? 'bg-blue-600 text-white'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -289,13 +298,13 @@ export function RichTextEditor({
             <Heading3 className="w-4 h-4" />
           </button>
 
-          <div className="w-[1px] h-4 bg-zinc-800 mx-1" />
+          <div className="w-[1px] h-4 bg-zinc-800 mx-1 shrink-0" />
 
           {/* Inline styles */}
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`p-1.5 rounded ${
+            className={`p-1.5 rounded shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center ${
               editor.isActive('bold')
                 ? 'bg-blue-600 text-white'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -307,7 +316,7 @@ export function RichTextEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`p-1.5 rounded ${
+            className={`p-1.5 rounded shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center ${
               editor.isActive('italic')
                 ? 'bg-blue-600 text-white'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -319,7 +328,7 @@ export function RichTextEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleUnderline().run()}
-            className={`p-1.5 rounded ${
+            className={`p-1.5 rounded shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center ${
               editor.isActive('underline')
                 ? 'bg-blue-600 text-white'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -329,13 +338,13 @@ export function RichTextEditor({
             <UnderlineIcon className="w-4 h-4" />
           </button>
 
-          <div className="w-[1px] h-4 bg-zinc-800 mx-1" />
+          <div className="w-[1px] h-4 bg-zinc-800 mx-1 shrink-0" />
 
           {/* Lists */}
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className={`p-1.5 rounded ${
+            className={`p-1.5 rounded shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center ${
               editor.isActive('bulletList')
                 ? 'bg-blue-600 text-white'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -347,7 +356,7 @@ export function RichTextEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            className={`p-1.5 rounded ${
+            className={`p-1.5 rounded shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center ${
               editor.isActive('orderedList')
                 ? 'bg-blue-600 text-white'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -359,7 +368,7 @@ export function RichTextEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleTaskList().run()}
-            className={`p-1.5 rounded ${
+            className={`p-1.5 rounded shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center ${
               editor.isActive('taskList')
                 ? 'bg-blue-600 text-white'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -371,7 +380,7 @@ export function RichTextEditor({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className={`p-1.5 rounded ${
+            className={`p-1.5 rounded shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center ${
               editor.isActive('blockquote')
                 ? 'bg-blue-600 text-white'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -381,13 +390,13 @@ export function RichTextEditor({
             <Quote className="w-4 h-4" />
           </button>
 
-          <div className="w-[1px] h-4 bg-zinc-800 mx-1" />
+          <div className="w-[1px] h-4 bg-zinc-800 mx-1 shrink-0" />
 
           {/* Links */}
           <button
             type="button"
             onClick={setLink}
-            className={`p-1.5 rounded ${
+            className={`p-1.5 rounded shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center ${
               editor.isActive('link')
                 ? 'bg-blue-600 text-white'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -400,21 +409,21 @@ export function RichTextEditor({
             <button
               type="button"
               onClick={() => editor.chain().focus().unsetLink().run()}
-              className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800"
+              className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center"
               title="Remove Link"
             >
               <Unlink className="w-4 h-4" />
             </button>
           )}
 
-          <div className="w-[1px] h-4 bg-zinc-800 mx-1" />
+          <div className="w-[1px] h-4 bg-zinc-800 mx-1 shrink-0" />
 
           {/* Undo / Redo */}
           <button
             type="button"
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}
-            className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none"
+            className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center"
             title="Undo"
           >
             <Undo className="w-4 h-4" />
@@ -423,121 +432,129 @@ export function RichTextEditor({
             type="button"
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().redo()}
-            className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none"
+            className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none shrink-0 min-w-[32px] min-h-[32px] flex items-center justify-center"
             title="Redo"
           >
             <Redo className="w-4 h-4" />
           </button>
 
-          <div className="w-[1px] h-4 bg-zinc-800 mx-1" />
+          <div className="w-[1px] h-4 bg-zinc-800 mx-1 shrink-0" />
 
           {/* AI Notes Assistant Button */}
           <button
             type="button"
             onClick={handleTriggerAiAssistant}
-            className="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 border border-purple-500/30 text-xs font-medium transition-all shadow-sm"
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 border border-purple-500/30 text-xs font-medium transition-all shadow-sm shrink-0 min-h-[32px]"
             title="AI Notes Assistant (Organise, Grammar, Summarise, etc.)"
           >
-            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-            <span className="hidden sm:inline">AI Assistant</span>
+            <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+            <span>AI Assistant</span>
           </button>
         </div>
 
         {/* Status Indicator & Save Actions */}
-        <div className="flex items-center space-x-3 text-xs">
-          {saveStatus === 'saving' && (
-            <span className="flex items-center text-amber-400">
-              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-              Saving...
-            </span>
-          )}
-          {saveStatus === 'saved' && (
-            <span className="flex items-center text-emerald-400">
-              <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-              Saved {lastSaved && `at ${formatSavedTime(lastSaved)}`}
-            </span>
-          )}
-          {saveStatus === 'unsaved' && (
-            <span className="flex items-center text-zinc-400">
-              <span className="w-2 h-2 rounded-full bg-amber-400 mr-1.5 animate-ping" />
-              Unsaved changes
-            </span>
-          )}
-          {saveStatus === 'error' && (
-            <span className="flex items-center text-red-400">
-              <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
-              Save failed
-            </span>
-          )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSaveNow}
-            disabled={saveStatus === 'saving' || isDeleting}
-            className="h-7 px-2.5 text-xs text-zinc-300"
-          >
-            {saveStatus === 'saving' ? (
-              <>
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-3 h-3 mr-1" />
-                Save
-              </>
+        <div className="flex items-center justify-between sm:justify-end gap-2 text-xs w-full sm:w-auto pt-1.5 sm:pt-0 border-t border-zinc-800/40 sm:border-0 shrink-0">
+          <div className="flex items-center min-w-0">
+            {saveStatus === 'saving' && (
+              <span className="flex items-center text-amber-400 truncate">
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin shrink-0" />
+                <span className="truncate">Saving...</span>
+              </span>
             )}
-          </Button>
+            {saveStatus === 'saved' && (
+              <span className="flex items-center text-emerald-400 truncate">
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+                <span className="truncate">Saved {lastSaved && `(${formatSavedTime(lastSaved)})`}</span>
+              </span>
+            )}
+            {saveStatus === 'unsaved' && (
+              <span className="flex items-center text-zinc-400 truncate">
+                <span className="w-2 h-2 rounded-full bg-amber-400 mr-1.5 animate-ping shrink-0" />
+                <span className="truncate">Unsaved</span>
+              </span>
+            )}
+            {saveStatus === 'error' && (
+              <span className="flex items-center text-red-400 truncate">
+                <AlertCircle className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+                <span className="truncate">Save failed</span>
+              </span>
+            )}
+          </div>
 
-          {onDelete && (
+          <div className="flex items-center space-x-1.5 shrink-0">
             <Button
               variant="outline"
               size="sm"
-              onClick={async () => {
-                if (isDeleting) return
-                setIsDeleting(true)
-                try {
-                  await onDelete()
-                } finally {
-                  setIsDeleting(false)
-                }
-              }}
+              onClick={handleSaveNow}
               disabled={saveStatus === 'saving' || isDeleting}
-              className="h-7 px-2 text-xs text-zinc-400 hover:text-red-400 hover:border-red-500/30"
-              title="Delete Note"
+              className="h-8 sm:h-7 px-3 sm:px-2.5 text-xs text-zinc-200 font-medium min-h-[32px]"
             >
-              {isDeleting ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
+              {saveStatus === 'saving' ? (
+                <>
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  Saving...
+                </>
               ) : (
-                <Trash2 className="w-3 h-3" />
+                <>
+                  <Save className="w-3 h-3 mr-1" />
+                  Save
+                </>
               )}
             </Button>
-          )}
+
+            {onDelete && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  if (isDeleting) return
+                  setIsDeleting(true)
+                  try {
+                    await onDelete()
+                  } finally {
+                    setIsDeleting(false)
+                  }
+                }}
+                disabled={saveStatus === 'saving' || isDeleting}
+                className="h-8 sm:h-7 px-2 text-xs text-zinc-400 hover:text-red-400 hover:border-red-500/30 min-h-[32px]"
+                title="Delete Note"
+              >
+                {isDeleting ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3 h-3" />
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Editor Writing Area */}
-      <div className="p-6 md:p-8 flex-1 cursor-text focus-within:ring-0">
+      <div className="p-4 sm:p-6 md:p-8 flex-1 cursor-text focus-within:ring-0">
         <div className="max-w-3xl mx-auto">
           <EditorContent editor={editor} />
         </div>
       </div>
 
       {/* AI Modals */}
-      <AiConsentModal
-        isOpen={isConsentOpen}
-        onClose={() => setIsConsentOpen(false)}
-        onConsentGranted={handleConsentGranted}
-      />
+      {isConsentOpen && (
+        <AiConsentModal
+          isOpen={isConsentOpen}
+          onClose={() => setIsConsentOpen(false)}
+          onConsentGranted={handleConsentGranted}
+        />
+      )}
 
-      <NotesAssistantDialog
-        isOpen={isAiAssistantOpen}
-        onClose={() => setIsAiAssistantOpen(false)}
-        selectedText={selectedText}
-        fullText={fullDocText}
-        onApplyChanges={handleApplyAiChanges}
-      />
+      {isAiAssistantOpen && (
+        <NotesAssistantDialog
+          isOpen={isAiAssistantOpen}
+          onClose={() => setIsAiAssistantOpen(false)}
+          selectedText={selectedText}
+          fullText={fullDocText}
+          onApplyChanges={handleApplyAiChanges}
+        />
+      )}
     </div>
   )
 }

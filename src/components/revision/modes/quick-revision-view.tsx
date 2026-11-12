@@ -80,9 +80,9 @@ export function QuickRevisionView({
   return (
     <div className="space-y-6">
       {/* Top Banner & Refresh */}
-      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/20 rounded-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/20 rounded-xl gap-3">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+          <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
@@ -95,7 +95,7 @@ export function QuickRevisionView({
           size="sm"
           onClick={handleGenerate}
           disabled={isLoading}
-          className="text-xs border-white/10 text-zinc-300 hover:text-white"
+          className="text-xs border-white/10 text-zinc-300 hover:text-white w-full sm:w-auto min-h-[36px]"
         >
           {isLoading ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />

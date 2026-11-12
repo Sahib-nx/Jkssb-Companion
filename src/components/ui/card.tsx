@@ -4,16 +4,25 @@ import { cn } from '@/lib/utils'
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      'rounded-xl border border-zinc-800/80 bg-[#11141D] text-zinc-100 shadow-sm transition-all',
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, ...props }, ref) => {
+  // Convert any legacy opaque #11141D card background to cinematic translucent glassmorphism
+  const sanitizedClassName = className
+    ? className
+        .replace(/\bbg-\[#11141D\]\b/g, 'bg-[#0B0D12]/60 backdrop-blur-md')
+        .replace(/\bborder-zinc-800\/80\b/g, 'border-white/10')
+    : ''
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'rounded-xl border border-white/10 bg-[#0B0D12]/60 backdrop-blur-md text-zinc-100 shadow-xl transition-all',
+        sanitizedClassName
+      )}
+      {...props}
+    />
+  )
+})
 Card.displayName = 'Card'
 
 const CardHeader = React.forwardRef<

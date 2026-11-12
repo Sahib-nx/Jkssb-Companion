@@ -86,7 +86,7 @@ export function DashboardNav({ userEmail }: DashboardNavProps) {
   return (
     <>
       {/* Top Mobile Bar */}
-      <div className="md:hidden flex items-center justify-between px-3.5 py-3 bg-[#0E1118] border-b border-zinc-800/80 sticky top-0 z-30">
+      <div className="md:hidden flex items-center justify-between px-3.5 py-3 bg-[#0E1118]/85 backdrop-blur-xl border-b border-white/10 sticky top-0 z-30">
         <div className="flex items-center space-x-2.5 min-w-0">
           <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
             <BookOpen className="w-4 h-4" />
@@ -119,13 +119,13 @@ export function DashboardNav({ userEmail }: DashboardNavProps) {
 
       {/* Navigation Sidebar */}
       <aside
-        className={`fixed md:sticky top-0 left-0 z-40 h-[100dvh] w-72 max-w-[85vw] bg-[#0E1118] border-r border-zinc-800/80 flex flex-col justify-between transition-transform duration-200 md:translate-x-0 ${
+        className={`fixed md:sticky top-0 left-0 z-40 h-[100dvh] w-72 max-w-[85vw] bg-[#0E1118]/85 backdrop-blur-xl border-r border-white/10 flex flex-col justify-between transition-transform duration-200 md:translate-x-0 ${
           mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >
         <div className="overflow-y-auto flex-1">
           {/* Brand header with mobile close button */}
-          <div className="p-5 border-b border-zinc-800/70 flex items-center justify-between">
+          <div className="p-5 border-b border-white/10 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-xl bg-blue-600/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
                 <BookOpen className="w-5 h-5" />
@@ -158,7 +158,7 @@ export function DashboardNav({ userEmail }: DashboardNavProps) {
                   onClick={() => setMobileOpen(false)}
                   className={`flex items-center space-x-3 px-3.5 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                     link.active
-                      ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 font-semibold'
+                      ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold shadow-sm shadow-blue-500/10'
                       : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
                   }`}
                 >
@@ -171,7 +171,7 @@ export function DashboardNav({ userEmail }: DashboardNavProps) {
         </div>
 
         {/* User profile & Logout */}
-        <div className="p-4 border-t border-zinc-800/70 bg-[#0B0D12]/40 shrink-0">
+        <div className="p-4 border-t border-white/10 bg-[#0B0D12]/60 backdrop-blur-md shrink-0">
           <div className="flex items-center justify-between mb-3 px-1">
             <div className="truncate pr-2">
               <p className="text-xs font-medium text-zinc-200 truncate">{userEmail || 'Aspirant'}</p>

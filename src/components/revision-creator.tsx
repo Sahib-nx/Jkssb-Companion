@@ -141,7 +141,7 @@ export function RevisionCreator({
   }
 
   return (
-    <div className="rounded-xl border border-zinc-800/80 bg-[#11141D] p-4 sm:p-6 space-y-4 sm:space-y-5">
+    <div className="rounded-xl border border-white/10 bg-[#0B0D12]/75 backdrop-blur-md p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xl">
       <div className="flex items-center justify-between border-b border-zinc-800/70 pb-3">
         <div className="flex items-center space-x-2.5">
           <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">

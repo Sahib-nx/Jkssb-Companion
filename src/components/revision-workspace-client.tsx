@@ -264,7 +264,7 @@ export function RevisionWorkspaceClient({
       </div>
 
       {/* Progress Bar through the session */}
-      <div className="p-3.5 rounded-xl bg-[#11141D] border border-zinc-800/80 space-y-2">
+      <div className="p-3.5 rounded-xl bg-[#0B0D12]/60 border border-white/10 backdrop-blur-md space-y-2 shadow-lg">
         <div className="flex items-center justify-between text-xs">
           <span className="text-zinc-300 font-medium">
             Lecture {currentIndex + 1} of {session.total_lectures} &bull;{' '}
@@ -285,9 +285,9 @@ export function RevisionWorkspaceClient({
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
         {/* Left Side: Dedicated Notes Reading Area (3 Cols) */}
         <div className="lg:col-span-3 space-y-4">
-          <div className="rounded-xl border border-zinc-800/80 bg-[#11141D] overflow-hidden">
+          <div className="rounded-xl border border-white/10 bg-[#0B0D12]/75 backdrop-blur-md overflow-hidden shadow-xl">
             {/* Header with Lecture Info and Status */}
-            <div className="p-4 sm:p-5 border-b border-zinc-800/80 bg-[#0E1118] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-4 sm:p-5 border-b border-white/10 bg-[#0E1118]/80 backdrop-blur-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center space-x-2 text-xs text-zinc-400 mb-1">
                   <span>{currentItem?.subject.name}</span>
@@ -452,11 +452,11 @@ export function RevisionWorkspaceClient({
 
         {/* Right Side: Lecture Selection Overview (1 Col) */}
         <div
-          className={`rounded-xl border border-zinc-800/80 bg-[#11141D] overflow-hidden lg:block ${
+          className={`rounded-xl border border-white/10 bg-[#0B0D12]/75 backdrop-blur-md overflow-hidden shadow-xl lg:block ${
             drawerOpen ? 'block' : 'hidden'
           }`}
         >
-          <div className="p-3.5 border-b border-zinc-800/80 bg-[#0E1118] flex items-center justify-between">
+          <div className="p-3.5 border-b border-white/10 bg-[#0E1118]/80 backdrop-blur-sm flex items-center justify-between">
             <h3 className="text-xs font-semibold text-white uppercase tracking-wider">
               Lecture List ({session.total_lectures})
             </h3>

@@ -564,8 +564,8 @@ function TaskRow({
     <div
       className={`flex items-start sm:items-center justify-between p-3.5 rounded-xl border transition-all gap-3 ${
         isCompleted
-          ? 'bg-[#11141D]/50 border-zinc-800/60'
-          : 'bg-[#11141D] border-zinc-800/80 hover:border-zinc-700/80'
+          ? 'bg-[#0B0D12]/60 border-white/5 backdrop-blur-sm shadow-sm'
+          : 'bg-[#0B0D12]/55 border-white/10 hover:border-white/20 backdrop-blur-sm shadow-md'
       }`}
     >
       <div className="flex items-start space-x-3 flex-1 min-w-0">

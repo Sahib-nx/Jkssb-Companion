@@ -152,7 +152,7 @@ export function GeneralNotesClient({
 
       {/* Subject Filter Pills and Search */}
       <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
-        <div className="flex overflow-x-auto no-scrollbar gap-1.5 p-1 rounded-lg bg-[#11141D] border border-zinc-800 shrink-0">
+        <div className="flex overflow-x-auto no-scrollbar gap-1.5 p-1 rounded-lg bg-[#0B0D12]/60 border border-white/10 backdrop-blur-sm shrink-0">
           <button
             onClick={() => setSelectedSubjectId('all')}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[34px] ${
@@ -204,7 +204,7 @@ export function GeneralNotesClient({
 
       {/* Grid of Notes */}
       {filteredNotes.length === 0 ? (
-        <div className="p-16 text-center rounded-xl bg-[#11141D] border border-zinc-800/80 space-y-3">
+        <div className="p-16 text-center rounded-xl bg-[#0B0D12]/55 border border-white/10 backdrop-blur-md space-y-3">
           <div className="w-12 h-12 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-400 mx-auto flex items-center justify-center">
             <FileText className="w-6 h-6" />
           </div>

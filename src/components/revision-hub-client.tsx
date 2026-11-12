@@ -213,7 +213,7 @@ export function RevisionHubClient({
       </div>
 
       {/* Main Tabs Navigation */}
-      <div className="flex overflow-x-auto no-scrollbar gap-1.5 p-1 rounded-lg bg-[#11141D] border border-zinc-800 shrink-0">
+      <div className="flex overflow-x-auto no-scrollbar gap-1.5 p-1 rounded-lg bg-[#0B0D12]/60 border border-white/10 backdrop-blur-sm shrink-0">
         <button
           onClick={() => setActiveTab('active')}
           className={`px-3 py-2 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[36px] ${

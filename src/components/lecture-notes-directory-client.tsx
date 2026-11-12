@@ -167,7 +167,7 @@ export function LectureNotesDirectoryClient({
 
       {/* Search and Filter Row */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        <div className="flex overflow-x-auto no-scrollbar gap-1.5 p-1 rounded-lg bg-[#11141D] border border-zinc-800 shrink-0">
+        <div className="flex overflow-x-auto no-scrollbar gap-1.5 p-1 rounded-lg bg-[#0B0D12]/60 border border-white/10 backdrop-blur-sm shrink-0">
           <button
             onClick={() => setFilter('all')}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[34px] ${
@@ -214,7 +214,7 @@ export function LectureNotesDirectoryClient({
       {/* Lecture Notes Cards List */}
       <div className="space-y-2.5">
         {filteredLectures.length === 0 ? (
-          <div className="p-12 text-center rounded-xl bg-[#11141D] border border-zinc-800/80">
+          <div className="p-12 text-center rounded-xl bg-[#0B0D12]/55 border border-white/10 backdrop-blur-md">
             <p className="text-zinc-400 text-sm">No lecture notes found matching your filter.</p>
           </div>
         ) : (
@@ -228,7 +228,7 @@ export function LectureNotesDirectoryClient({
             return (
               <div
                 key={lecture.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-zinc-800/80 bg-[#11141D] hover:border-zinc-700/80 transition-all gap-3"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-white/10 bg-[#0B0D12]/55 hover:border-white/20 backdrop-blur-sm shadow-md transition-all gap-3"
               >
                 <div className="space-y-1.5 flex-1 min-w-0 pr-2">
                   <div className="flex items-center space-x-2.5 flex-wrap gap-y-1">

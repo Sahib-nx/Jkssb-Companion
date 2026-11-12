@@ -267,7 +267,7 @@ export function LectureTrackerClient({
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        <div className="flex items-center space-x-1.5 p-1 rounded-lg bg-[#11141D] border border-zinc-800 overflow-x-auto no-scrollbar">
+        <div className="flex items-center space-x-1.5 p-1 rounded-lg bg-[#0B0D12]/60 border border-white/10 backdrop-blur-sm overflow-x-auto no-scrollbar">
           <button
             onClick={() => setFilter('all')}
             className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
@@ -324,7 +324,7 @@ export function LectureTrackerClient({
       {/* Lectures List */}
       <div className="space-y-2.5">
         {filteredLectures.length === 0 ? (
-          <div className="p-12 text-center rounded-xl bg-[#11141D] border border-zinc-800/80">
+          <div className="p-12 text-center rounded-xl bg-[#0B0D12]/55 border border-white/10 backdrop-blur-md">
             <p className="text-zinc-400 text-sm">No lectures found matching your criteria.</p>
           </div>
         ) : (
@@ -335,12 +335,12 @@ export function LectureTrackerClient({
             return (
               <div
                 key={lecture.id}
-                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all ${
+                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border backdrop-blur-sm transition-all ${
                   status === 'completed'
-                    ? 'bg-[#11141D]/60 border-emerald-500/20'
+                    ? 'bg-[#0B0D12]/60 border-emerald-500/25 shadow-lg shadow-emerald-500/5'
                     : status === 'in_progress'
-                    ? 'bg-[#11141D] border-amber-500/30'
-                    : 'bg-[#11141D] border-zinc-800/80 hover:border-zinc-700/80'
+                    ? 'bg-[#0B0D12]/60 border-amber-500/30 shadow-lg shadow-amber-500/5'
+                    : 'bg-[#0B0D12]/55 border-white/10 hover:border-white/20 shadow-md'
                 }`}
               >
                 {/* Left side: Lecture Number, Title & Timestamp info */}

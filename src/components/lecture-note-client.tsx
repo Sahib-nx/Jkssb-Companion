@@ -216,7 +216,7 @@ export function LectureNoteClient({
       </div>
 
       {/* Lecture Title, Subject, and Progress Status Banner */}
-      <div className="p-4 sm:p-5 rounded-xl border border-zinc-800/80 bg-[#11141D] flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-xl border border-white/10 bg-[#0B0D12]/60 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
         <div>
           <div className="flex items-center space-x-2.5 mb-1.5 flex-wrap gap-y-1">
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium">

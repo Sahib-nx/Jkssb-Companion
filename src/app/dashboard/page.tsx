@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { getDashboardComprehensiveData } from '@/lib/data'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -55,24 +54,8 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="relative">
-      {/* 1. Cinematic Background Image Layer (Fixed across entire main content area) */}
-      <div className="fixed inset-0 md:left-64 z-0 pointer-events-none overflow-hidden">
-        <Image
-          src="/images/dashboard-bg.jpg"
-          alt="Cinematic Moonlit Forest Study Atmosphere"
-          fill
-          priority
-          quality={95}
-          className="object-cover object-center opacity-85"
-        />
-        {/* Subtle vignette overlay protecting text readability while leaving the glowing moon, stars, storm clouds and forest clearly visible */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0B0D12]/35 via-[#0B0D12]/55 to-[#0B0D12]/85" />
-      </div>
-
-      {/* 2. Interactive Dashboard Content Layer */}
-      <div className="relative z-10 space-y-8">
-        {/* Welcome & Exam Header */}
+    <div className="space-y-8">
+      {/* Welcome & Exam Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-medium mb-2.5 backdrop-blur-sm">
@@ -504,6 +487,5 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
-    </div>
   )
 }

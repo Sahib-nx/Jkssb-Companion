@@ -254,10 +254,10 @@ export function RichTextEditor({
 
   return (
     <div
-      className={`rounded-xl border border-zinc-800/80 bg-[#11141D] flex flex-col overflow-hidden shadow-sm ${className}`}
+      className={`rounded-xl border border-white/10 bg-[#0B0D12]/75 backdrop-blur-md flex flex-col overflow-hidden shadow-xl ${className}`}
     >
       {/* Editor Header & Toolbar */}
-      <div className="border-b border-zinc-800/80 bg-[#0E1118] p-2 sm:p-2.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+      <div className="border-b border-white/10 bg-[#0E1118]/80 backdrop-blur-sm p-2 sm:p-2.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
         {/* Formatting Actions - Scrollable on mobile, flex on desktop */}
         <div className="flex items-center overflow-x-auto no-scrollbar gap-1 py-0.5 w-full sm:w-auto shrink min-w-0">
           {/* Headings */}

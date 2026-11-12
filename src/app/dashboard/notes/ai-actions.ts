@@ -4,17 +4,18 @@ import { createClient } from '@/lib/supabase/server'
 import { aiRateLimiter } from '@/lib/ai/rate-limiter'
 import { generateTextContent } from '@/lib/ai/gemini'
 import { getNotesAssistantPrompt, NotesOperation, BASE_SYSTEM_PROMPT } from '@/lib/ai/prompts'
-import { getUserAiPreferences } from '@/lib/ai/consent-actions'
+import { getDecryptedUserApiKey } from '@/lib/ai/byok-actions'
 
 export interface ProcessNotesResult {
   success: boolean
   transformedContent?: string
   operation?: NotesOperation
   error?: string
+  errorCode?: 'NO_API_KEY' | 'AI_DISABLED' | 'RATE_LIMIT' | 'AUTH_ERROR' | 'UNKNOWN'
 }
 
 /**
- * Server action to process notes via Gemini AI Assistant
+ * Server action to process notes via Gemini AI Assistant using the authenticated user's BYOK key.
  */
 export async function processNotesWithAI(
   operation: NotesOperation,
@@ -29,15 +30,37 @@ export async function processNotesWithAI(
     } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      return { success: false, error: 'Unauthorized. Please sign in to use AI features.' }
-    }
-
-    // Check user AI preferences
-    const preferences = await getUserAiPreferences()
-    if (!preferences.ai_enabled) {
       return {
         success: false,
-        error: 'AI features are currently disabled in your Settings. Enable them to use the assistant.',
+        error: 'Unauthorized. Please sign in to use AI features.',
+        errorCode: 'AUTH_ERROR',
+      }
+    }
+
+    // Retrieve user's decrypted Gemini API key (enforces that AI is enabled & configured)
+    let userApiKey: string
+    try {
+      userApiKey = await getDecryptedUserApiKey(user.id)
+    } catch (keyErr: any) {
+      const msg = keyErr?.message || ''
+      if (msg.includes('NO_API_KEY')) {
+        return {
+          success: false,
+          error: 'No Gemini API key connected. Please connect your personal Google Gemini API key in Settings.',
+          errorCode: 'NO_API_KEY',
+        }
+      }
+      if (msg.includes('AI_DISABLED')) {
+        return {
+          success: false,
+          error: 'AI features are disabled in Settings. Please enable them to use the assistant.',
+          errorCode: 'AI_DISABLED',
+        }
+      }
+      return {
+        success: false,
+        error: msg || 'AI configuration error. Please check your Settings.',
+        errorCode: 'UNKNOWN',
       }
     }
 
@@ -47,6 +70,7 @@ export async function processNotesWithAI(
       return {
         success: false,
         error: `Rate limit reached. Please wait ${rateCheck.retryAfterSeconds} seconds before making another AI request.`,
+        errorCode: 'RATE_LIMIT',
       }
     }
 
@@ -59,9 +83,9 @@ export async function processNotesWithAI(
       }
     }
 
-    // Build prompt & generate
+    // Build prompt & generate using the user's personal BYOK key
     const prompt = getNotesAssistantPrompt(operation, trimmed, isSelectionOnly)
-    const result = await generateTextContent(prompt, BASE_SYSTEM_PROMPT)
+    const result = await generateTextContent(userApiKey, prompt, BASE_SYSTEM_PROMPT)
 
     if (!result) {
       return {

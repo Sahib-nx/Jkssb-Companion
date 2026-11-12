@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import {
   FileText,
@@ -140,6 +141,22 @@ export function RevisionAiModes({
           )
         })}
       </div>
+
+      {/* BYOK Status & Grounding Context */}
+      {activeTab !== 'notes' && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-zinc-400 px-1 gap-1">
+          <div className="flex items-center space-x-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+            <span>AI Revision is grounded strictly on your lecture notes.</span>
+          </div>
+          <Link
+            href="/dashboard/settings"
+            className="text-purple-400 hover:text-purple-300 underline underline-offset-2 self-start sm:self-auto shrink-0"
+          >
+            Manage Gemini API Key
+          </Link>
+        </div>
+      )}
 
       {/* Tab Content Views */}
       <div className="min-h-[400px]">

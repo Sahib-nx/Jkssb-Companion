@@ -1,4 +1,5 @@
 import { getTrackerData } from '@/lib/data'
+import { redirect } from 'next/navigation'
 import { LectureTrackerClient } from '@/components/lecture-tracker-client'
 
 interface TrackerPageProps {
@@ -23,6 +24,12 @@ export default async function TrackerPage({ searchParams }: TrackerPageProps) {
 
   const { subjects, allLecturesBySubject, overallPercentage, initialSubjectSlug } = data
 
+  if (subjects.length === 0) {
+    redirect('/dashboard/onboarding')
+  }
+
+  const totalAllLectures = subjects.reduce((acc, s) => acc + (s.total_lectures || 0), 0)
+
   return (
     <div className="space-y-6">
       <div>
@@ -30,7 +37,7 @@ export default async function TrackerPage({ searchParams }: TrackerPageProps) {
           Lecture Tracker
         </h1>
         <p className="text-sm text-zinc-400 mt-1">
-          Monitor your study status for all 255 JKSSB examination lectures
+          Monitor your study status across all {totalAllLectures} lectures
         </p>
       </div>
 

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { getDashboardComprehensiveData } from '@/lib/data'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -14,7 +15,6 @@ import {
   RotateCcw,
   CalendarDays,
   FileText,
-  AlertTriangle,
   BarChart3,
   Check,
   Calendar,
@@ -39,6 +39,10 @@ export default async function DashboardPage() {
     todayTotal,
     revisions,
   } = data
+
+  if (subjects.length === 0) {
+    redirect('/dashboard/onboarding')
+  }
 
   const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return ''
@@ -66,7 +70,7 @@ export default async function DashboardPage() {
               Study Command Centre
             </h1>
             <p className="text-sm text-zinc-300 mt-1.5 drop-shadow">
-              Welcome back. You are tracking 255 course lectures across 4 subjects.
+              Welcome back. You are tracking {overallStats.total_lectures} lectures across {subjects.length} {subjects.length === 1 ? 'subject' : 'subjects'}.
             </p>
           </div>
 

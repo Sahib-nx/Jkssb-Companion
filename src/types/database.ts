@@ -8,17 +8,23 @@ export type Json =
 
 export type Subject = {
   id: string
+  user_id?: string | null
   name: string
-  slug: 'general-knowledge' | 'english' | 'mathematics' | 'reasoning' | string
+  slug: string
   total_lectures: number
+  is_archived?: boolean
+  color?: string | null
+  sort_order?: number
   created_at: string
 }
 
 export type Lecture = {
   id: string
+  user_id?: string | null
   subject_id: string
   lecture_number: number
   title: string
+  is_archived?: boolean
   created_at: string
 }
 

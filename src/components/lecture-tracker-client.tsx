@@ -8,6 +8,7 @@ import {
   LectureWithProgress,
 } from '@/types/database'
 import { updateLectureProgress, type TargetStatus } from '@/app/dashboard/tracker/actions'
+import { renameLecture } from '@/app/dashboard/workspace/actions'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,8 @@ import {
   Loader2,
   Calendar,
   BookText,
+  Edit2,
+  X,
 } from 'lucide-react'
 
 import { useToast } from '@/components/ui/toast'
@@ -47,7 +50,7 @@ export function LectureTrackerClient({
 }: LectureTrackerClientProps) {
   const toast = useToast()
   const [activeSubjectSlug, setActiveSubjectSlug] = useState<string>(
-    initialSubjectSlug || fallbackActiveSubject?.slug || subjects[0]?.slug || 'general-knowledge'
+    initialSubjectSlug || fallbackActiveSubject?.slug || subjects[0]?.slug || ''
   )
   const [lecturesMap, setLecturesMap] = useState<Record<string, LectureWithProgress[]>>(
     allLecturesBySubject || (fallbackActiveSubject && fallbackLectures ? { [fallbackActiveSubject.slug]: fallbackLectures } : {})
@@ -56,6 +59,42 @@ export function LectureTrackerClient({
   const [searchQuery, setSearchQuery] = useState('')
   const [pendingLectureId, setPendingLectureId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  // Inline Lecture Renaming State
+  const [editingLectureId, setEditingLectureId] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState('')
+  const [isRenaming, startRenameTransition] = useTransition()
+
+  const handleStartRename = (lec: LectureWithProgress) => {
+    setEditingLectureId(lec.id)
+    setEditingTitle(lec.title)
+  }
+
+  const handleSaveRename = (lectureId: string) => {
+    if (!editingTitle.trim()) {
+      setEditingLectureId(null)
+      return
+    }
+
+    startRenameTransition(async () => {
+      const res = await renameLecture(lectureId, editingTitle.trim())
+      if (res.success) {
+        toast.success('Lecture renamed successfully.')
+        setLecturesMap((prev) => {
+          const updated = { ...prev }
+          if (activeSubjectSlug && updated[activeSubjectSlug]) {
+            updated[activeSubjectSlug] = updated[activeSubjectSlug].map((l) =>
+              l.id === lectureId ? { ...l, title: editingTitle.trim() } : l
+            )
+          }
+          return updated
+        })
+        setEditingLectureId(null)
+      } else {
+        toast.error(res.error || 'Failed to rename lecture.')
+      }
+    })
+  }
 
   // Instant subject switch with zero network delay & URL synchronization
   const handleSubjectChange = (slug: string) => {
@@ -216,11 +255,22 @@ export function LectureTrackerClient({
                 </Badge>
               </div>
               <CardDescription className="text-xs text-zinc-400 mt-1">
-                JKSSB Syllabus &bull; Overall prep progress: {overallPercentage}%
+                Personal Syllabus &bull; Overall prep progress: {overallPercentage}%
               </CardDescription>
             </div>
 
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-4 sm:space-x-6">
+              <Link href="/dashboard/settings">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-white/10 bg-zinc-900/60 hover:bg-zinc-800 text-xs text-zinc-300"
+                >
+                  <Edit2 className="w-3.5 h-3.5 mr-1.5 text-blue-400" />
+                  <span>Manage Subject</span>
+                </Button>
+              </Link>
+
               <div className="text-right">
                 <span className="text-2xl font-bold text-blue-400">
                   {activeSubject.progress_percentage}%
@@ -356,10 +406,58 @@ export function LectureTrackerClient({
                   </div>
 
                   <div>
-                    <div className="flex items-center space-x-2.5">
-                      <h4 className="text-sm font-semibold text-white">
-                        {lecture.title}
-                      </h4>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {editingLectureId === lecture.id ? (
+                        <div className="flex items-center gap-1.5 my-0.5">
+                          <Input
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveRename(lecture.id)
+                              if (e.key === 'Escape') setEditingLectureId(null)
+                            }}
+                            autoFocus
+                            className="h-7 text-xs bg-[#0B0D12] border-blue-500 w-44 sm:w-56"
+                          />
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleSaveRename(lecture.id)}
+                            disabled={isRenaming}
+                            className="h-7 w-7 text-emerald-400 hover:bg-emerald-500/10"
+                            title="Save title"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => setEditingLectureId(null)}
+                            disabled={isRenaming}
+                            className="h-7 w-7 text-zinc-400 hover:bg-zinc-800"
+                            title="Cancel"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 group">
+                          <h4 className="text-sm font-semibold text-white">
+                            {lecture.title}
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => handleStartRename(lecture)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-zinc-500 hover:text-blue-400"
+                            title="Rename lecture"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+
                       {status === 'completed' && (
                         <Badge variant="success">Completed</Badge>
                       )}

@@ -17,62 +17,63 @@ import {
   StudyTaskWithSubject,
 } from '@/types/database'
 
-const SUBJECT_ORDER: Record<string, number> = {
-  'general-knowledge': 1,
-  'english': 2,
-  'mathematics': 3,
-  'reasoning': 4,
-}
-
 /**
- * Cached per-request subjects getter.
- * The 4 JKSSB subjects are static course reference data.
+ * Cached per-request subjects getter for the authenticated user.
  * Memoizing via React cache() eliminates repeated duplicate queries across layout, pages, and components.
  */
 export const getCachedSubjects = cache(async (): Promise<Subject[]> => {
   const supabase = await createClient()
+  const user = await getAuthenticatedUser()
+  if (!user) {
+    return []
+  }
+
   const { data: subjects, error: subError } = await supabase
     .from('subjects')
     .select('*')
-    .order('name')
+    .eq('user_id', user.id)
+    .eq('is_archived', false)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true })
 
-  if (subError || !subjects) {
-    throw new Error(`Failed to load subjects: ${subError?.message || 'Unknown error'}`)
+  if (subError) {
+    console.error('[getCachedSubjects error]:', subError.message)
+    return []
   }
 
-  return [...(subjects as Subject[])].sort((a, b) => {
-    const orderA = SUBJECT_ORDER[a.slug] || 99
-    const orderB = SUBJECT_ORDER[b.slug] || 99
-    return orderA - orderB
-  })
+  return (subjects || []) as Subject[]
 })
 
 /**
- * Cached per-request subjects with lectures getter.
- * The 255-lecture catalogue is static reference data.
+ * Cached per-request subjects with lectures getter for the authenticated user.
  * Memoizing via React cache() eliminates repeated joins across revision sessions and catalogues.
  */
 export const getCachedSubjectsWithLectures = cache(async () => {
   const supabase = await createClient()
+  const user = await getAuthenticatedUser()
+  if (!user) {
+    return []
+  }
+
   const { data: subjects, error } = await supabase
     .from('subjects')
     .select('*, lectures(*)')
-    .order('name')
+    .eq('user_id', user.id)
+    .eq('is_archived', false)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true })
 
   if (error || !subjects) {
-    throw new Error(`Failed to load subjects with lectures: ${error?.message || 'Unknown error'}`)
+    console.error('[getCachedSubjectsWithLectures error]:', error?.message)
+    return []
   }
 
-  return [...subjects]
-    .sort((a, b) => {
-      const orderA = SUBJECT_ORDER[a.slug] || 99
-      const orderB = SUBJECT_ORDER[b.slug] || 99
-      return orderA - orderB
-    })
-    .map((s) => ({
-      ...s,
-      lectures: ((s.lectures || []) as Lecture[]).sort((a, b) => a.lecture_number - b.lecture_number),
-    }))
+  return (subjects as any[]).map((s) => ({
+    ...s,
+    lectures: (((s.lectures || []) as Lecture[]).filter((l) => !l.is_archived)).sort(
+      (a, b) => a.lecture_number - b.lecture_number
+    ),
+  }))
 })
 
 export async function getDashboardData() {
@@ -169,6 +170,14 @@ export async function getSubjectLectures(slug?: string) {
 
   // 2. Get subjects (memoized per-request)
   const sortedSubjects = await getCachedSubjects()
+  if (!sortedSubjects || sortedSubjects.length === 0) {
+    return {
+      user,
+      subjects: [],
+      activeSubject: null,
+      lectures: [],
+    }
+  }
 
   // Selected subject: default to first subject if slug not provided
   const activeSubject =
@@ -254,6 +263,16 @@ export async function getTrackerData(initialSlug?: string) {
     throw new Error(`Failed to load progress: ${progressRes.error.message}`)
   }
 
+  if (sortedSubjects.length === 0) {
+    return {
+      user,
+      subjects: [],
+      allLecturesBySubject: {},
+      overallPercentage: 0,
+      initialSubjectSlug: '',
+    }
+  }
+
   const progressRecords = progressRes.data || []
   const progressMap = new Map<string, LectureProgress>()
   for (const p of progressRecords) {
@@ -301,7 +320,7 @@ export async function getTrackerData(initialSlug?: string) {
   const activeSubjectSlug =
     initialSlug && allLecturesBySubject[initialSlug]
       ? initialSlug
-      : sortedSubjects[0]?.slug || 'general-knowledge'
+      : sortedSubjects[0]?.slug || ''
 
   return {
     user,
@@ -401,6 +420,20 @@ export async function getLectureNotesDirectory(initialSlug?: string) {
       .eq('user_id', user.id),
   ])
 
+  if (sortedSubjects.length === 0) {
+    return {
+      user,
+      subjects: [],
+      activeSubject: null,
+      lectures: [],
+      notesCount: 0,
+      totalLectures: 0,
+      allLecturesBySubject: {},
+      notesCountBySubject: {},
+      initialSubjectSlug: '',
+    }
+  }
+
   const progressMap = new Map<string, string>()
   for (const p of progressRes.data || []) {
     progressMap.set(p.lecture_id, p.status)
@@ -433,12 +466,12 @@ export async function getLectureNotesDirectory(initialSlug?: string) {
   const activeSubjectSlug =
     initialSlug && allLecturesBySubject[initialSlug]
       ? initialSlug
-      : sortedSubjects[0]?.slug || 'general-knowledge'
+      : sortedSubjects[0]?.slug || ''
   const activeSubject =
-    sortedSubjects.find((s) => s.slug === activeSubjectSlug) || sortedSubjects[0]
+    sortedSubjects.find((s) => s.slug === activeSubjectSlug) || sortedSubjects[0] || null
 
-  const activeLectures = allLecturesBySubject[activeSubjectSlug] || []
-  const activeNotesCount = notesCountBySubject[activeSubjectSlug] || 0
+  const activeLectures = activeSubjectSlug ? (allLecturesBySubject[activeSubjectSlug] || []) : []
+  const activeNotesCount = activeSubjectSlug ? (notesCountBySubject[activeSubjectSlug] || 0) : 0
 
   return {
     user,
@@ -446,7 +479,7 @@ export async function getLectureNotesDirectory(initialSlug?: string) {
     activeSubject,
     lectures: activeLectures,
     notesCount: activeNotesCount,
-    totalLectures: activeSubject.total_lectures,
+    totalLectures: activeSubject?.total_lectures || 0,
     allLecturesBySubject,
     notesCountBySubject,
     initialSubjectSlug: activeSubjectSlug,
@@ -659,6 +692,7 @@ export async function getRevisionHubData() {
     needsReRevisionLectures,
     totalRevisedLectures: revisionSummaries.length,
     totalRevisionEvents: historyRecords.length,
+    totalLectures: sortedSubjects.reduce((acc, s) => acc + (s.total_lectures || 0), 0),
   }
 }
 

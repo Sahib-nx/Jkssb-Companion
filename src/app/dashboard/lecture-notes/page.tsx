@@ -1,4 +1,5 @@
 import { getLectureNotesDirectory } from '@/lib/data'
+import { redirect } from 'next/navigation'
 import { LectureNotesDirectoryClient } from '@/components/lecture-notes-directory-client'
 
 interface LectureNotesPageProps {
@@ -32,6 +33,10 @@ export default async function LectureNotesPage({ searchParams }: LectureNotesPag
     initialSubjectSlug,
   } = data
 
+  if (subjects.length === 0) {
+    redirect('/dashboard/onboarding')
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -39,7 +44,7 @@ export default async function LectureNotesPage({ searchParams }: LectureNotesPag
           My Lecture Notes
         </h1>
         <p className="text-sm text-zinc-400 mt-1">
-          Review, write, and manage your personal study notes for all 255 course lectures
+          Review, write, and manage your personal study notes across all course lectures
         </p>
       </div>
 

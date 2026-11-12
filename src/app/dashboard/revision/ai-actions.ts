@@ -13,9 +13,26 @@ import {
   getWeakAreasPrompt,
   getKnowledgeGapsPrompt,
 } from '@/lib/ai/prompts'
-import { getUserAiPreferences } from '@/lib/ai/consent-actions'
+import { getDecryptedUserApiKey } from '@/lib/ai/byok-actions'
 
-async function checkAuthAndRateLimit() {
+function parseAiError(err: any): { error: string; errorCode?: string } {
+  const msg = err?.message || 'AI revision request failed'
+  if (msg.includes('NO_API_KEY')) {
+    return {
+      error: 'No Gemini API key connected. Please connect your personal Google Gemini API key in Settings.',
+      errorCode: 'NO_API_KEY',
+    }
+  }
+  if (msg.includes('AI_DISABLED')) {
+    return {
+      error: 'AI features are disabled in Settings. Please enable them to continue.',
+      errorCode: 'AI_DISABLED',
+    }
+  }
+  return { error: msg }
+}
+
+async function checkAuthAndRateLimit(): Promise<{ user: any; apiKey: string }> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -26,10 +43,8 @@ async function checkAuthAndRateLimit() {
     throw new Error('Unauthorized. Please sign in to use AI features.')
   }
 
-  const prefs = await getUserAiPreferences()
-  if (!prefs.ai_enabled) {
-    throw new Error('AI features are disabled in Settings. Please enable them to continue.')
-  }
+  // Retrieve user's decrypted Gemini API key (enforces that AI is enabled & configured)
+  const apiKey = await getDecryptedUserApiKey(user.id)
 
   const rateCheck = aiRateLimiter.checkLimit(user.id)
   if (!rateCheck.allowed) {
@@ -38,7 +53,7 @@ async function checkAuthAndRateLimit() {
     )
   }
 
-  return user
+  return { user, apiKey }
 }
 
 // 1. QUICK REVISION
@@ -52,9 +67,9 @@ export async function fetchQuickRevision(
   lectureTitle: string,
   subjectName: string,
   notes: string
-): Promise<{ success: boolean; data?: QuickRevisionData; error?: string }> {
+): Promise<{ success: boolean; data?: QuickRevisionData; error?: string; errorCode?: string }> {
   try {
-    await checkAuthAndRateLimit()
+    const { apiKey } = await checkAuthAndRateLimit()
     if (!notes || notes.trim().length < 15) {
       return {
         success: false,
@@ -63,10 +78,11 @@ export async function fetchQuickRevision(
     }
 
     const prompt = getQuickRevisionPrompt(lectureTitle, subjectName, notes)
-    const data = await generateStructuredJson<QuickRevisionData>(prompt, BASE_SYSTEM_PROMPT)
+    const data = await generateStructuredJson<QuickRevisionData>(apiKey, prompt, BASE_SYSTEM_PROMPT)
     return { success: true, data }
   } catch (err: any) {
-    return { success: false, error: err?.message || 'Failed to generate quick revision' }
+    const { error, errorCode } = parseAiError(err)
+    return { success: false, error, errorCode }
   }
 }
 
@@ -82,9 +98,9 @@ export async function fetchActiveRecallQuestion(
   subjectName: string,
   notes: string,
   previousQuestions: string[] = []
-): Promise<{ success: boolean; data?: ActiveRecallQuestionData; error?: string }> {
+): Promise<{ success: boolean; data?: ActiveRecallQuestionData; error?: string; errorCode?: string }> {
   try {
-    await checkAuthAndRateLimit()
+    const { apiKey } = await checkAuthAndRateLimit()
     if (!notes || notes.trim().length < 15) {
       return {
         success: false,
@@ -93,10 +109,11 @@ export async function fetchActiveRecallQuestion(
     }
 
     const prompt = getActiveRecallQuestionPrompt(lectureTitle, subjectName, notes, previousQuestions)
-    const data = await generateStructuredJson<ActiveRecallQuestionData>(prompt, BASE_SYSTEM_PROMPT)
+    const data = await generateStructuredJson<ActiveRecallQuestionData>(apiKey, prompt, BASE_SYSTEM_PROMPT)
     return { success: true, data }
   } catch (err: any) {
-    return { success: false, error: err?.message || 'Failed to generate recall question' }
+    const { error, errorCode } = parseAiError(err)
+    return { success: false, error, errorCode }
   }
 }
 
@@ -113,18 +130,19 @@ export async function evaluateRecallAnswer(
   question: string,
   userAnswer: string,
   notes: string
-): Promise<{ success: boolean; data?: ActiveRecallEvaluationData; error?: string }> {
+): Promise<{ success: boolean; data?: ActiveRecallEvaluationData; error?: string; errorCode?: string }> {
   try {
-    await checkAuthAndRateLimit()
+    const { apiKey } = await checkAuthAndRateLimit()
     if (!userAnswer || userAnswer.trim().length === 0) {
       return { success: false, error: 'Please enter an answer to evaluate.' }
     }
 
     const prompt = getActiveRecallEvaluationPrompt(question, userAnswer, notes)
-    const data = await generateStructuredJson<ActiveRecallEvaluationData>(prompt, BASE_SYSTEM_PROMPT)
+    const data = await generateStructuredJson<ActiveRecallEvaluationData>(apiKey, prompt, BASE_SYSTEM_PROMPT)
     return { success: true, data }
   } catch (err: any) {
-    return { success: false, error: err?.message || 'Failed to evaluate answer' }
+    const { error, errorCode } = parseAiError(err)
+    return { success: false, error, errorCode }
   }
 }
 
@@ -144,9 +162,9 @@ export async function fetchFlashcards(
   lectureTitle: string,
   subjectName: string,
   notes: string
-): Promise<{ success: boolean; data?: FlashcardsResponse; error?: string }> {
+): Promise<{ success: boolean; data?: FlashcardsResponse; error?: string; errorCode?: string }> {
   try {
-    await checkAuthAndRateLimit()
+    const { apiKey } = await checkAuthAndRateLimit()
     if (!notes || notes.trim().length < 15) {
       return {
         success: false,
@@ -155,10 +173,11 @@ export async function fetchFlashcards(
     }
 
     const prompt = getFlashcardsPrompt(lectureTitle, subjectName, notes)
-    const data = await generateStructuredJson<FlashcardsResponse>(prompt, BASE_SYSTEM_PROMPT)
+    const data = await generateStructuredJson<FlashcardsResponse>(apiKey, prompt, BASE_SYSTEM_PROMPT)
     return { success: true, data }
   } catch (err: any) {
-    return { success: false, error: err?.message || 'Failed to generate flashcards' }
+    const { error, errorCode } = parseAiError(err)
+    return { success: false, error, errorCode }
   }
 }
 
@@ -175,9 +194,9 @@ export async function fetchImportantPoints(
   lectureTitle: string,
   subjectName: string,
   notes: string
-): Promise<{ success: boolean; data?: ImportantPointsData; error?: string }> {
+): Promise<{ success: boolean; data?: ImportantPointsData; error?: string; errorCode?: string }> {
   try {
-    await checkAuthAndRateLimit()
+    const { apiKey } = await checkAuthAndRateLimit()
     if (!notes || notes.trim().length < 15) {
       return {
         success: false,
@@ -186,10 +205,11 @@ export async function fetchImportantPoints(
     }
 
     const prompt = getImportantPointsPrompt(lectureTitle, subjectName, notes)
-    const data = await generateStructuredJson<ImportantPointsData>(prompt, BASE_SYSTEM_PROMPT)
+    const data = await generateStructuredJson<ImportantPointsData>(apiKey, prompt, BASE_SYSTEM_PROMPT)
     return { success: true, data }
   } catch (err: any) {
-    return { success: false, error: err?.message || 'Failed to extract important points' }
+    const { error, errorCode } = parseAiError(err)
+    return { success: false, error, errorCode }
   }
 }
 
@@ -206,9 +226,9 @@ export async function explainWeakArea(
   subjectName: string,
   userQuery: string,
   notes: string
-): Promise<{ success: boolean; data?: WeakAreaExplanationData; error?: string }> {
+): Promise<{ success: boolean; data?: WeakAreaExplanationData; error?: string; errorCode?: string }> {
   try {
-    await checkAuthAndRateLimit()
+    const { apiKey } = await checkAuthAndRateLimit()
     if (!userQuery || userQuery.trim().length < 3) {
       return { success: false, error: 'Please enter a concept or question to explain.' }
     }
@@ -220,10 +240,11 @@ export async function explainWeakArea(
     }
 
     const prompt = getWeakAreasPrompt(lectureTitle, subjectName, userQuery, notes)
-    const data = await generateStructuredJson<WeakAreaExplanationData>(prompt, BASE_SYSTEM_PROMPT)
+    const data = await generateStructuredJson<WeakAreaExplanationData>(apiKey, prompt, BASE_SYSTEM_PROMPT)
     return { success: true, data }
   } catch (err: any) {
-    return { success: false, error: err?.message || 'Failed to explain weak area' }
+    const { error, errorCode } = parseAiError(err)
+    return { success: false, error, errorCode }
   }
 }
 
@@ -241,9 +262,9 @@ export async function findKnowledgeGaps(
   subjectName: string,
   userRecallText: string,
   notes: string
-): Promise<{ success: boolean; data?: KnowledgeGapsData; error?: string }> {
+): Promise<{ success: boolean; data?: KnowledgeGapsData; error?: string; errorCode?: string }> {
   try {
-    await checkAuthAndRateLimit()
+    const { apiKey } = await checkAuthAndRateLimit()
     if (!userRecallText || userRecallText.trim().length < 10) {
       return {
         success: false,
@@ -258,9 +279,10 @@ export async function findKnowledgeGaps(
     }
 
     const prompt = getKnowledgeGapsPrompt(lectureTitle, subjectName, userRecallText, notes)
-    const data = await generateStructuredJson<KnowledgeGapsData>(prompt, BASE_SYSTEM_PROMPT)
+    const data = await generateStructuredJson<KnowledgeGapsData>(apiKey, prompt, BASE_SYSTEM_PROMPT)
     return { success: true, data }
   } catch (err: any) {
-    return { success: false, error: err?.message || 'Failed to find knowledge gaps' }
+    const { error, errorCode } = parseAiError(err)
+    return { success: false, error, errorCode }
   }
 }

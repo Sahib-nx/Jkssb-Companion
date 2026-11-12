@@ -119,7 +119,7 @@ export function AnalyticsClient({
               <CardTitle className="text-base text-white">Syllabus Breakdown</CardTitle>
             </div>
             <CardDescription className="text-xs text-zinc-400">
-              Total 255 lectures distribution
+              Total {overallStats.total_lectures} lectures distribution
             </CardDescription>
           </CardHeader>
           <CardContent>

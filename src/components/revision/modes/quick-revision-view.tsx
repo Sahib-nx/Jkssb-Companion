@@ -46,7 +46,7 @@ export function QuickRevisionView({
   }, [lectureId])
 
   const handleGenerate = async () => {
-    if (!notesText || notesText.trim().length < 15) {
+    if (isLoading || !notesText || notesText.trim().length < 15) {
       return
     }
 

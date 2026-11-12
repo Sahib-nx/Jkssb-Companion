@@ -1,4 +1,5 @@
 import { getAnalyticsData } from '@/lib/data'
+import { redirect } from 'next/navigation'
 import dynamic from 'next/dynamic'
 
 const AnalyticsClient = dynamic(
@@ -39,6 +40,10 @@ export default async function AnalyticsPage() {
     totalTasks,
     completedTasks,
   } = data
+
+  if (subjectComparison.length === 0) {
+    redirect('/dashboard/onboarding')
+  }
 
   return (
     <AnalyticsClient

@@ -1,4 +1,5 @@
 import { getDailyPlannerData } from '@/lib/data'
+import { redirect } from 'next/navigation'
 import { PlannerClient } from '@/components/planner-client'
 
 export default async function PlannerPage() {
@@ -22,6 +23,10 @@ export default async function PlannerPage() {
     totalCount,
     todayCompletedCount,
   } = data
+
+  if (subjects.length === 0) {
+    redirect('/dashboard/onboarding')
+  }
 
   return (
     <PlannerClient

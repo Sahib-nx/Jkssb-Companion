@@ -49,7 +49,7 @@ export function AiConsentModal({ isOpen, onClose, onConsentGranted }: AiConsentM
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">Enable AI Study Assistant</h3>
-            <p className="text-xs text-zinc-400">Powered by Google Gemini Developer API</p>
+            <p className="text-xs text-zinc-400">Powered by Google Gemini (BYOK)</p>
           </div>
         </div>
 
@@ -65,8 +65,8 @@ export function AiConsentModal({ isOpen, onClose, onConsentGranted }: AiConsentM
           <div className="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20 flex items-start space-x-3">
             <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div className="text-xs leading-relaxed text-zinc-300">
-              <strong className="text-white block mb-0.5">Privacy & Free-Tier Disclosure</strong>
-              Text from your notes is transmitted securely to Google Gemini exclusively to produce your requested study insights. Never put passwords, personal IDs, or private credentials in your notes.
+              <strong className="text-white block mb-0.5">Private Bring Your Own Key (BYOK)</strong>
+              Your study notes are processed using your personal Google Gemini API key. Credentials are encrypted with hardware AES-256-GCM at rest, never shared across students, and never used to train public AI models.
             </div>
           </div>
 

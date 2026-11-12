@@ -58,6 +58,7 @@ interface RevisionHubClientProps {
   needsReRevisionLectures: LectureRevisionSummary[]
   totalRevisedLectures: number
   totalRevisionEvents: number
+  totalLectures?: number
 }
 
 export function RevisionHubClient({
@@ -71,6 +72,7 @@ export function RevisionHubClient({
   needsReRevisionLectures,
   totalRevisedLectures,
   totalRevisionEvents,
+  totalLectures,
 }: RevisionHubClientProps) {
   const toast = useToast()
   const [showCreator, setShowCreator] = useState(false)
@@ -163,7 +165,7 @@ export function RevisionHubClient({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              {totalRevisedLectures} <span className="text-xs text-zinc-500 font-normal">/ 255</span>
+              {totalRevisedLectures} <span className="text-xs text-zinc-500 font-normal">/ {totalLectures || '—'}</span>
             </div>
             <p className="text-[11px] text-zinc-400 mt-1">Unique lectures revised</p>
           </CardContent>

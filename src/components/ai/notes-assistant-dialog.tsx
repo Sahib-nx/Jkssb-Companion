@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
   Sparkles,
@@ -17,6 +18,8 @@ import {
   ArrowRight,
   Split,
   Eye,
+  ExternalLink,
+  AlertCircle,
 } from 'lucide-react'
 import { NotesOperation } from '@/lib/ai/prompts'
 import { processNotesWithAI } from '@/app/dashboard/notes/ai-actions'
@@ -88,11 +91,13 @@ export function NotesAssistantDialog({
   fullText,
   onApplyChanges,
 }: NotesAssistantDialogProps) {
+  const router = useRouter()
   const toast = useToast()
   const [selectedOperation, setSelectedOperation] = useState<NotesOperation | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [previewContent, setPreviewContent] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'preview' | 'original'>('preview')
+  const [byokError, setByokError] = useState<{ code: string; message: string } | null>(null)
 
   const hasSelection = !!selectedText && selectedText.trim().length > 0
   const activeText = hasSelection ? selectedText! : fullText
@@ -100,6 +105,7 @@ export function NotesAssistantDialog({
   if (!isOpen) return null
 
   const handleRunOperation = async (op: NotesOperation) => {
+    if (isLoading) return
     setSelectedOperation(op)
     setIsLoading(true)
 
@@ -107,7 +113,11 @@ export function NotesAssistantDialog({
       const res = await processNotesWithAI(op, activeText, hasSelection)
       if (res.success && res.transformedContent) {
         setPreviewContent(res.transformedContent)
+        setByokError(null)
       } else {
+        if (res.errorCode === 'NO_API_KEY' || res.errorCode === 'AI_DISABLED') {
+          setByokError({ code: res.errorCode, message: res.error || 'Configuration required' })
+        }
         toast.error(res.error || 'Failed to process notes')
         setSelectedOperation(null)
       }
@@ -174,6 +184,52 @@ export function NotesAssistantDialog({
           {/* STATE 1: Operation Selection */}
           {!previewContent && !isLoading && (
             <div>
+              {byokError && (
+                <div className="mb-4 p-4 rounded-xl bg-purple-500/10 border border-purple-500/30 text-xs">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start space-x-3">
+                      <KeyRound className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                      <div>
+                        <h5 className="font-semibold text-white mb-0.5">
+                          {byokError.code === 'NO_API_KEY'
+                            ? 'Google Gemini API Key Required'
+                            : 'AI Assistant Currently Disabled'}
+                        </h5>
+                        <p className="text-zinc-300 leading-relaxed mb-3">
+                          {byokError.message}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              onClose()
+                              router.push('/dashboard/settings')
+                            }}
+                            className="bg-purple-600 hover:bg-purple-500 text-white h-8 text-xs font-medium"
+                          >
+                            Open Settings to Configure Key
+                          </Button>
+                          <a
+                            href="https://aistudio.google.com/apikey"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-purple-300 hover:text-white text-xs font-medium px-2 py-1"
+                          >
+                            Get Free Key on Google AI Studio
+                            <ExternalLink className="w-3 h-3 ml-1" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setByokError(null)}
+                      className="text-zinc-400 hover:text-white p-1 rounded hover:bg-white/5"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
               <p className="text-xs text-zinc-400 mb-4">
                 Select an operation below. You will be able to review the suggested changes in a
                 side-by-side preview before applying them.
@@ -185,7 +241,8 @@ export function NotesAssistantDialog({
                     <button
                       key={op.id}
                       onClick={() => handleRunOperation(op.id)}
-                      className="flex items-start text-left p-4 rounded-xl border border-white/10 hover:border-purple-500/40 bg-white/[0.02] hover:bg-white/[0.05] transition-all group"
+                      disabled={isLoading}
+                      className="flex items-start text-left p-4 rounded-xl border border-white/10 hover:border-purple-500/40 bg-white/[0.02] hover:bg-white/[0.05] disabled:opacity-50 disabled:cursor-not-allowed transition-all group"
                     >
                       <div className={`p-2.5 rounded-lg border ${op.color} mr-3.5 shrink-0 group-hover:scale-105 transition-transform`}>
                         <Icon className="w-5 h-5" />

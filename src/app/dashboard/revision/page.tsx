@@ -1,4 +1,5 @@
 import { getRevisionHubData } from '@/lib/data'
+import { redirect } from 'next/navigation'
 import { RevisionHubClient } from '@/components/revision-hub-client'
 
 export default async function RevisionHubPage() {
@@ -23,7 +24,12 @@ export default async function RevisionHubPage() {
     needsReRevisionLectures,
     totalRevisedLectures,
     totalRevisionEvents,
+    totalLectures,
   } = data
+
+  if (subjects.length === 0) {
+    redirect('/dashboard/onboarding')
+  }
 
   return (
     <RevisionHubClient
@@ -37,6 +43,7 @@ export default async function RevisionHubPage() {
       needsReRevisionLectures={needsReRevisionLectures}
       totalRevisedLectures={totalRevisedLectures}
       totalRevisionEvents={totalRevisionEvents}
+      totalLectures={totalLectures}
     />
   )
 }

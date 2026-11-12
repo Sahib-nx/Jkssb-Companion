@@ -51,7 +51,7 @@ export function FlashcardsView({
   }, [lectureId])
 
   const handleGenerate = async () => {
-    if (!notesText || notesText.trim().length < 15) return
+    if (isLoading || !notesText || notesText.trim().length < 15) return
 
     setIsLoading(true)
     setIsFlipped(false)

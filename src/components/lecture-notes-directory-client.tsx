@@ -46,7 +46,7 @@ export function LectureNotesDirectoryClient({
   totalLectures: fallbackTotalLectures,
 }: LectureNotesDirectoryClientProps) {
   const [activeSubjectSlug, setActiveSubjectSlug] = useState<string>(
-    initialSubjectSlug || fallbackActiveSubject?.slug || subjects[0]?.slug || 'general-knowledge'
+    initialSubjectSlug || fallbackActiveSubject?.slug || subjects[0]?.slug || ''
   )
   const [filter, setFilter] = useState<'all' | 'has_notes' | 'no_notes'>('all')
   const [searchQuery, setSearchQuery] = useState('')

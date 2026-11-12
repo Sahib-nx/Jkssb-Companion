@@ -33,6 +33,7 @@ export function WeakAreasView({
   const [isLoading, setIsLoading] = useState(false)
 
   const handleAsk = async () => {
+    if (isLoading) return
     if (!query.trim() || query.trim().length < 3) {
       toast.error('Please enter a question or topic to explain.')
       return

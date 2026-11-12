@@ -253,7 +253,7 @@ export function RevisionCreator({
                 <Input
                   type="number"
                   min={1}
-                  max={currentSubject?.total_lectures || 151}
+                  max={currentSubject?.total_lectures || 1}
                   value={startNum}
                   onChange={(e) => setStartNum(Number(e.target.value))}
                   className="h-9 text-xs"
@@ -264,7 +264,7 @@ export function RevisionCreator({
                 <Input
                   type="number"
                   min={1}
-                  max={currentSubject?.total_lectures || 151}
+                  max={currentSubject?.total_lectures || 1}
                   value={endNum}
                   onChange={(e) => setEndNum(Number(e.target.value))}
                   className="h-9 text-xs"

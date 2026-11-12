@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { GEMINI_CONFIG } from './config'
 
 export interface UserAiPreferences {
   consent_given: boolean
@@ -16,7 +17,7 @@ const DEFAULT_PREFERENCES: UserAiPreferences = {
   consent_version: '1.0',
   consented_at: null,
   ai_enabled: true,
-  preferred_model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+  preferred_model: GEMINI_CONFIG.MODEL_ID,
 }
 
 /**
@@ -49,7 +50,7 @@ export async function getUserAiPreferences(): Promise<UserAiPreferences> {
       consent_version: data.consent_version || '1.0',
       consented_at: data.consented_at,
       ai_enabled: data.ai_enabled ?? true,
-      preferred_model: data.preferred_model || (process.env.GEMINI_MODEL || 'gemini-2.5-flash'),
+      preferred_model: data.preferred_model || GEMINI_CONFIG.MODEL_ID,
     }
   } catch (err) {
     console.warn('[AI Preferences] Error fetching preferences, using defaults:', err)

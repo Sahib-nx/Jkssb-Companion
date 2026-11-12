@@ -33,6 +33,7 @@ export function KnowledgeGapsView({
   const [isLoading, setIsLoading] = useState(false)
 
   const handleCompare = async () => {
+    if (isLoading) return
     if (!recallText.trim() || recallText.trim().length < 10) {
       toast.error('Please write what you remember (at least 1-2 sentences) first.')
       return

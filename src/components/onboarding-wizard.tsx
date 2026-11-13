@@ -35,7 +35,7 @@ const COLOR_OPTIONS = [
 
 const QUICK_PRESETS = [
   {
-    label: 'JKSSB MTS (4 Subjects • 255 Lectures)',
+    label: 'Comprehensive Exam Syllabus (4 Subjects • 255 Lectures)',
     subjects: [
       { name: 'General Knowledge', lectureCount: 151, color: '#3B82F6' },
       { name: 'English', lectureCount: 54, color: '#10B981' },
@@ -161,7 +161,7 @@ export function OnboardingWizard() {
             <span>Personal Study Architecture</span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white drop-shadow-lg">
-            Welcome to MTS Companion
+            Welcome to Study Companion
           </h1>
           <p className="text-sm sm:text-base text-zinc-300 max-w-xl mx-auto drop-shadow leading-relaxed">
             Let&apos;s set up your personal study workspace. Add your subjects and the number of

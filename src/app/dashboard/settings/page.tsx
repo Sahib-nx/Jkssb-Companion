@@ -114,7 +114,7 @@ export default async function SettingsPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="p-3 rounded-lg bg-[#0B0D12] border border-zinc-800">
               <span className="text-zinc-500 block mb-0.5">Application</span>
-              <span className="font-semibold text-white">MTS Companion v1.0.0</span>
+              <span className="font-semibold text-white">Study Companion v1.0.0</span>
             </div>
             <div className="p-3 rounded-lg bg-[#0B0D12] border border-zinc-800">
               <span className="text-zinc-500 block mb-0.5">Framework</span>

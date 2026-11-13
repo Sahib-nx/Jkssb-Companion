@@ -93,7 +93,7 @@ export function DashboardNav({ userEmail }: DashboardNavProps) {
           </div>
           <div className="truncate">
             <span className="font-semibold text-xs text-white tracking-tight block truncate">
-              MTS Companion
+              Study Companion
             </span>
             <span className="text-[10px] text-blue-400 font-medium block truncate">
               {activePageName}
@@ -119,7 +119,7 @@ export function DashboardNav({ userEmail }: DashboardNavProps) {
 
       {/* Navigation Sidebar */}
       <aside
-        className={`fixed md:sticky top-0 left-0 z-40 h-[100dvh] w-72 max-w-[85vw] bg-[#0E1118]/85 backdrop-blur-xl border-r border-white/10 flex flex-col justify-between transition-transform duration-200 md:translate-x-0 ${
+        className={`fixed md:sticky top-0 left-0 z-50 h-[100dvh] w-72 max-w-[85vw] bg-[#0E1118]/90 backdrop-blur-xl border-r border-white/10 flex flex-col justify-between transition-transform duration-200 md:translate-x-0 ${
           mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >
@@ -131,8 +131,8 @@ export function DashboardNav({ userEmail }: DashboardNavProps) {
                 <BookOpen className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="font-bold text-sm tracking-tight text-white">MTS Companion</h1>
-                <p className="text-[11px] text-zinc-400 font-medium">JKSSB Prep Suite</p>
+                <h1 className="font-bold text-sm tracking-tight text-white">Study Companion</h1>
+                <p className="text-[11px] text-zinc-400 font-medium">Study Management Platform</p>
               </div>
             </div>
             <button
@@ -174,8 +174,8 @@ export function DashboardNav({ userEmail }: DashboardNavProps) {
         <div className="p-4 border-t border-white/10 bg-[#0B0D12]/60 backdrop-blur-md shrink-0">
           <div className="flex items-center justify-between mb-3 px-1">
             <div className="truncate pr-2">
-              <p className="text-xs font-medium text-zinc-200 truncate">{userEmail || 'Aspirant'}</p>
-              <p className="text-[11px] text-zinc-400">JKSSB Aspirant</p>
+              <p className="text-xs font-medium text-zinc-200 truncate">{userEmail || 'Student'}</p>
+              <p className="text-[11px] text-zinc-400">Student Workspace</p>
             </div>
           </div>
           <form

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getDashboardComprehensiveData } from '@/lib/data'
+import { OverviewAssistantSection } from '@/components/overview/overview-assistant-section'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
@@ -64,7 +65,7 @@ export default async function DashboardPage() {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-medium mb-2.5 backdrop-blur-sm">
               <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-              <span>JKSSB Multi-Tasking Staff (MTS) Examination</span>
+              <span>Study Companion — Your Learning. Your Progress. Your Plan.</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow-md">
               Study Command Centre
@@ -173,7 +174,7 @@ export default async function DashboardPage() {
               <div>
                 <CardTitle className="text-base text-white">Overall Preparation Status</CardTitle>
                 <CardDescription className="text-xs text-zinc-400 mt-0.5">
-                  Calculated across all 255 lectures &bull; JK Civil Service Course
+                  Calculated across all {overallStats.total_lectures} lectures &bull; Personalized Syllabus
                 </CardDescription>
               </div>
               <span className="text-2xl font-extrabold text-blue-400">
@@ -204,7 +205,7 @@ export default async function DashboardPage() {
               <BookOpen className="w-4 h-4 mr-2 text-blue-400 shrink-0" />
               <div className="text-left min-w-0">
                 <div className="font-semibold text-white truncate">Lecture Tracker</div>
-                <div className="text-[10px] text-zinc-400 truncate">Track 255 lectures</div>
+                <div className="text-[10px] text-zinc-400 truncate">Track {overallStats.total_lectures} lectures</div>
               </div>
             </Button>
           </Link>
@@ -261,6 +262,16 @@ export default async function DashboardPage() {
             </Button>
           </Link>
         </div>
+
+        {/* Central Intelligence: Ask Study Companion AI Assistant */}
+        <OverviewAssistantSection
+          hasConfiguredWorkspace={subjects.length > 0}
+          totalLectures={overallStats.total_lectures}
+          completedLectures={overallStats.completed_count}
+          remainingLectures={overallStats.remaining_count}
+          overallPercentage={overallStats.progress_percentage}
+          subjectsCount={subjects.length}
+        />
 
         {/* Row: Today's Study Focus & Revision Highlights */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

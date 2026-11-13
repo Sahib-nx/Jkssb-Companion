@@ -36,10 +36,10 @@ export default function LoginPage() {
             <BookOpen className="w-6 h-6" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white drop-shadow-lg">
-            MTS Companion
+            Study Companion
           </h1>
           <p className="text-sm text-zinc-300 drop-shadow">
-            JKSSB Multi-Tasking Staff Exam Preparation
+            Your Learning. Your Progress. Your Plan.
           </p>
         </div>
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-xl text-white">Sign In</CardTitle>
             <CardDescription className="text-zinc-400">
-              Enter your credentials to access your lecture tracker
+              Enter your credentials to access your study workspace
             </CardDescription>
           </CardHeader>
           <CardContent>

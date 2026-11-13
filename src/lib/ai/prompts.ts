@@ -1,12 +1,12 @@
 /**
- * System Prompts & Prompt Templates for MTS Companion AI Engine
+ * System Prompts & Prompt Templates for Study Companion AI Engine
  * 
  * Strict Grounding Requirement:
  * All responses must be grounded strictly in the student's supplied notes.
  * No external hallucinated facts or topics outside the notes.
  */
 
-export const BASE_SYSTEM_PROMPT = `You are the specialized AI Study Tutor for the MTS Companion platform, designed specifically for students preparing for the JKSSB (Jammu & Kashmir Services Selection Board) Multi-Tasking Staff examination.
+export const BASE_SYSTEM_PROMPT = `You are the specialized AI Study Tutor for the Study Companion platform — Your Learning. Your Progress. Your Plan. You support students across any subject, examination syllabus, or academic pursuit.
 
 CRITICAL INSTRUCTIONS & GROUNDING RULES:
 1. You must STRICTLY base your responses on the provided student notes. Do not hallucinate, speculate, or introduce external syllabus details that are not supported or implied by the provided notes.
@@ -95,7 +95,7 @@ Output ONLY the formatted HTML content ready to be rendered in the rich text edi
 
     case 'key_points':
       return `Please extract all essential key points, formulas, definitions, dates, and names from ${scopeDescription}.
-Group them into high-yield bulleted points suitable for last-minute JKSSB revision.
+Group them into high-yield bulleted points suitable for last-minute revision.
 Use <strong> for the key term or date, followed by a concise description.
 
 INPUT NOTES:
@@ -241,7 +241,7 @@ export function getWeakAreasPrompt(
   userQuery: string,
   notes: string
 ): string {
-  return `The student is preparing for the JKSSB MTS exam and finds a concept confusing in "${lectureTitle}" (${subjectName}).
+  return `The student is studying and finds a concept confusing in "${lectureTitle}" (${subjectName}).
 Explain the student's question clearly and simply, using an intuitive analogy or step-by-step breakdown.
 Ground your explanation STRICTLY on the student's notes below.
 

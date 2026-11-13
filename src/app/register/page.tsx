@@ -36,10 +36,10 @@ export default function RegisterPage() {
             <BookOpen className="w-6 h-6" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white drop-shadow-lg">
-            MTS Companion
+            Study Companion
           </h1>
           <p className="text-sm text-zinc-300 drop-shadow">
-            Create an account to track your JKSSB preparation
+            Your Learning. Your Progress. Your Plan.
           </p>
         </div>
 
@@ -47,7 +47,7 @@ export default function RegisterPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-xl text-white">Register</CardTitle>
             <CardDescription className="text-zinc-400">
-              Start monitoring your 255 lectures with isolated personal tracking
+              Create your personalized study workspace and track your syllabus progress
             </CardDescription>
           </CardHeader>
           <CardContent>

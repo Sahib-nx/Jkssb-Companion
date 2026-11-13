@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/button'
 import { Sparkles, ShieldCheck, AlertCircle, X, Check } from 'lucide-react'
 import { recordUserAiConsent } from '@/lib/ai/consent-actions'
@@ -12,15 +13,31 @@ interface AiConsentModalProps {
 }
 
 export function AiConsentModal({ isOpen, onClose, onConsentGranted }: AiConsentModalProps) {
+  const [mounted, setMounted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  if (!isOpen) return null
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [isOpen])
+
+  if (!isOpen || !mounted) return null
 
   const handleAccept = async () => {
     setIsSubmitting(true)
     try {
       await recordUserAiConsent()
       if (typeof window !== 'undefined') {
+        localStorage.setItem('study_companion_ai_consent', 'true')
         localStorage.setItem('mts_ai_consent', 'true')
       }
       onConsentGranted()
@@ -32,19 +49,20 @@ export function AiConsentModal({ isOpen, onClose, onConsentGranted }: AiConsentM
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg bg-[#11141D] border border-white/10 rounded-2xl shadow-2xl p-4.5 sm:p-6 md:p-8 text-zinc-100">
+  const modalContent = (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3.5 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-lg bg-[#11141D] border border-white/10 rounded-2xl shadow-2xl p-4.5 sm:p-6 md:p-8 text-zinc-100 max-h-[90dvh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+          className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
           disabled={isSubmitting}
+          aria-label="Close dialog"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex items-center space-x-3 mb-5">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+          <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
@@ -80,14 +98,14 @@ export function AiConsentModal({ isOpen, onClose, onConsentGranted }: AiConsentM
             variant="outline"
             onClick={onClose}
             disabled={isSubmitting}
-            className="w-full sm:w-auto text-xs border-white/10 text-zinc-400 hover:text-white"
+            className="w-full sm:w-auto text-xs border-white/10 text-zinc-400 hover:text-white min-h-[40px] sm:min-h-[36px]"
           >
             Cancel
           </Button>
           <Button
             onClick={handleAccept}
             disabled={isSubmitting}
-            className="w-full sm:w-auto text-xs bg-purple-600 hover:bg-purple-500 text-white font-medium"
+            className="w-full sm:w-auto text-xs bg-purple-600 hover:bg-purple-500 text-white font-medium min-h-[40px] sm:min-h-[36px]"
           >
             {isSubmitting ? (
               'Enabling...'
@@ -102,4 +120,6 @@ export function AiConsentModal({ isOpen, onClose, onConsentGranted }: AiConsentM
       </div>
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 }

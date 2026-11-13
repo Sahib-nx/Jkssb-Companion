@@ -27,6 +27,7 @@ import {
   CalendarCheck,
   Award,
 } from 'lucide-react'
+import { AnalyticsAssistantSection } from '@/components/analytics/analytics-assistant-section'
 
 interface AnalyticsClientProps {
   overallStats: {
@@ -108,6 +109,15 @@ export function AnalyticsClient({
           </Badge>
         </div>
       </div>
+
+      {/* AI Analytics Assistant */}
+      <AnalyticsAssistantSection
+        overallStats={overallStats}
+        subjectComparison={subjectComparison}
+        totalRevisionEvents={totalRevisionEvents}
+        totalTasks={totalTasks}
+        completedTasks={completedTasks}
+      />
 
       {/* Row 1: Syllabus Distribution Donut & Subject Comparison Bar */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

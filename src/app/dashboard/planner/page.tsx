@@ -22,6 +22,7 @@ export default async function PlannerPage() {
     completedTasks,
     totalCount,
     todayCompletedCount,
+    activeRoadmap,
   } = data
 
   if (subjects.length === 0) {
@@ -38,6 +39,7 @@ export default async function PlannerPage() {
       completedTasks={completedTasks}
       totalCount={totalCount}
       todayCompletedCount={todayCompletedCount}
+      initialActiveRoadmap={activeRoadmap}
     />
   )
 }

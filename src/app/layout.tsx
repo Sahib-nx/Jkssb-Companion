@@ -13,8 +13,15 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'MTS Companion — JKSSB Study Management',
-  description: 'Personal study management and lecture tracker for the JKSSB Multi-Tasking Staff examination.',
+  title: 'Study Companion — Your Learning. Your Progress. Your Plan.',
+  description:
+    'A comprehensive study management, syllabus tracking, active revision, and AI planning platform for any examination, subject, or learning goal.',
+  openGraph: {
+    title: 'Study Companion — Your Learning. Your Progress. Your Plan.',
+    description:
+      'A comprehensive study management, syllabus tracking, active revision, and AI planning platform for any examination, subject, or learning goal.',
+    siteName: 'Study Companion',
+  },
 }
 
 import { ToastProvider } from '@/components/ui/toast'

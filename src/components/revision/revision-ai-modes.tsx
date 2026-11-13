@@ -97,7 +97,9 @@ export function RevisionAiModes({
     const isAiTab = tab !== 'notes'
     if (isAiTab) {
       const hasConsented =
-        typeof window !== 'undefined' && localStorage.getItem('mts_ai_consent') === 'true'
+        typeof window !== 'undefined' &&
+        (localStorage.getItem('study_companion_ai_consent') === 'true' ||
+          localStorage.getItem('mts_ai_consent') === 'true')
       if (!hasConsented) {
         setPendingTab(tab)
         setIsConsentOpen(true)

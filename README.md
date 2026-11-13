@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Study Companion
+
+**Your Learning. Your Progress. Your Plan.**
+
+Study Companion is a modern, comprehensive study management platform designed for any examination, subject, syllabus, or personal learning goal. It empowers students with dynamic workspace customization, lecture tracking, rich text study notes, an AI Notes Assistant, systematic spaced-repetition revision, and an adaptive AI Daily Study Planner with intelligent rescheduling.
+
+---
+
+## Key Features
+
+- **Personalized Workspaces**: Create custom subjects and set target lecture counts for any syllabus or examination.
+- **Lecture Tracker**: Monitor progress across all subjects with instant switching, real-time percentages, and lecture notes integration.
+- **Rich Text Notes & AI Assistant**: In-depth note-taking with structured formatting, auto-save, and Google Gemini-powered organization, summarization, and concept clarity.
+- **Revision Centre**: Spaced-repetition revision modes including Quick Revision, Active Recall, Flashcards, and Weak Area Explanations.
+- **AI Syllabus Planner & Study Assistant**: Generate mathematically sound, pedagogical study roadmaps based on daily study availability, with an intelligent conversational assistant to reschedule missed work and adapt future schedules.
+- **Privacy & Bring Your Own Key (BYOK)**: Secure, encrypted Google Gemini API key configuration ensuring personal control and complete data isolation.
+- **Responsive Mobile Experience**: Designed mobile-first for phones, tablets, and desktops.
+
+---
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository and install dependencies:
+   ```bash
+   npm install
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. Configure environment variables in `.env.local`:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   AI_ENCRYPTION_SECRET=your_32_byte_hex_secret
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. Build for production:
+   ```bash
+   npm run build
+   ```

@@ -796,14 +796,22 @@ export async function getDailyPlannerData(selectedDate?: string) {
   const todayStr = new Date().toISOString().slice(0, 10)
   const activeDate = selectedDate || todayStr
 
-  // 2. Fetch all subjects and all user tasks in parallel
-  const [subjects, tasksRes] = await Promise.all([
+  // 2. Fetch all subjects, all user tasks, and active AI roadmap in parallel
+  const [subjects, tasksRes, roadmapRes] = await Promise.all([
     getCachedSubjects(),
     supabase
       .from('study_tasks')
-      .select('*, subjects(*)')
+      .select('*, subjects(*), lectures(id, title, lecture_number)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('ai_syllabus_roadmaps')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   if (tasksRes.error) {
@@ -813,6 +821,7 @@ export async function getDailyPlannerData(selectedDate?: string) {
   const allTasks: StudyTaskWithSubject[] = (tasksRes.data || []).map((t) => ({
     ...t,
     subject: (t as any).subjects as Subject | null,
+    lecture: (t as any).lectures as Lecture | null,
   }))
 
   // Categorize tasks:
@@ -836,6 +845,7 @@ export async function getDailyPlannerData(selectedDate?: string) {
     completedTasks,
     totalCount: allTasks.length,
     todayCompletedCount: todayTasks.filter((t) => t.status === 'completed').length,
+    activeRoadmap: (roadmapRes?.data || null) as any,
   }
 }
 
